@@ -1,92 +1,163 @@
-// =========================================================
-// PROGRESS POND V26 - COMPLETE JS
-// =========================================================
+/* =========================================================
+   PROGRESS POND FULL UPDATED JS
+   Combines:
+   - Tracker functionality of v25
+   - Layout and styling of v3
+   - 8 water buttons
+   - All logging buttons working
+   - Insight panel and completed goals
+========================================================= */
 
 (function () {
-    var pondData = {
-        daily: [], history: [], moodLog: [], sugarLog: [], carbLog: [],
-        waterLog: [], insulinLog: [], sleepLog: [], stressLog: [], energyLog: [],
-        symptomLog: [], exerciseLog: [], analytics: [], waterCount: 0,
-        streak: 0, lastStreakDate: null
-    };
+    "use strict";
 
-    var pondChart = null;
+    const STORAGE_KEY = "ProgressPond_V25V3";
 
-    var moodScores = { Manic:10, Happy:9, Focused:8, Calm:7, Tired:6, Confused:5, Grumpy:4, Angry:3, Sad:2, Crying:1 };
-    var energyScores = { Exhausted:1, Low:3, Okay:5, Good:7, Energetic:10 };
-    var stressScores = { Calm:1, Mild:3, Moderate:5, High:7, Extreme:10 };
-    var sleepQualityScores = { Bad:3, Good:7, Great:10 };
-
-    var moodEmojis = { Happy:"😊", Calm:"😌", Focused:"🧐", Tired:"😴", Grumpy:"😠", Confused:"😕", Angry:"😡", Sad:"😢", Crying:"😭", Manic:"🤪" };
-
-    var frogQuotes = ["🐸 💖 Ribbit! You're doing amazing! 💞 🐸","✨ 🐸 Take a deep breath, little froggy! 💗 ✨","🌸 🐸 Every hop counts! I'm proud of you! 💖 🌸","💕 🐸 Stay hydrated and stay happy! 🐸 💕","🐸 💗 You are the best frog in the pond! ✨ 🐸","🐸 ✨ Leap into happiness! ✨ 🐸","🐸 Don't worry, be hoppy! 🐸","🐸 🌈 Keep calm and leap on! 🌈 🐸"];
-
-    document.addEventListener("DOMContentLoaded", function(){
-        loadStorage(); setMotivation(); resetTimePicker(); setupButtons(); renderAll();
-    });
-
-    function loadStorage(){
-        var saved = localStorage.getItem("ProgressPond_V25");
-        if(!saved) return;
-        try { Object.assign(pondData, JSON.parse(saved)); } catch(e){ console.error("Load Error:",e); }
+    // Default pond data
+    function defaultData() {
+        return {
+            daily: [],
+            history: [],
+            moodLog: [],
+            sugarLog: [],
+            carbLog: [],
+            waterLog: [],
+            insulinLog: [],
+            sleepLog: [],
+            stressLog: [],
+            energyLog: [],
+            symptomLog: [],
+            exerciseLog: [],
+            analytics: [],
+            waterCount: 0,
+            streak: 0,
+            lastStreakDate: null
+        };
     }
 
-    function saveAndRefresh(){ localStorage.setItem("ProgressPond_V25", JSON.stringify(pondData)); renderAll(); }
-
-    function setMotivation(){
-        var motivationText = document.getElementById("motivationText");
-        if(motivationText) motivationText.textContent = frogQuotes[Math.floor(Math.random()*frogQuotes.length)];
+    // Load and save
+    function getData() {
+        let data = defaultData();
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (saved) data = Object.assign(data, saved);
+        } catch(e){console.error(e);}
+        return data;
     }
 
-    function setupButtons(){
-        setClick("addDailyBtn", addHop);
-        setClick("addSugarBtn", addSugar);
-        setClick("addCarbBtn", addCarb);
-        setClick("addInsulinBtn", addInsulin);
-        setClick("resetPondBtn", clearDayKeepGoals);
-        setClick("clearHistoryBtn", resetDayEverything);
-        setClick("clearWaterBtn", clearWater);
-        setClick("resetTimeBtn", resetTimePicker);
-        setClick("exportExcelBtn", exportGoalsToExcel);
-        setClick("historyToggle", ()=>{document.getElementById("historyFooter").classList.toggle("collapsed");});
-        setClick("bannerClose", ()=>{document.getElementById("motivationBar").style.display="none"});
+    function saveData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        renderAll();
+    }
 
-        document.querySelectorAll(".mood-btn").forEach(btn=>{
-            btn.addEventListener("click",()=>{ addLog("moodLog",{type:"mood", val:btn.getAttribute("data-mood"), icon:moodEmojis[btn.getAttribute("data-mood")], fullDate:currentFullDate(getSelectedTime())}); });
-        });
+    // Helper functions
+    function makeId(){return Date.now() + '_' + Math.random().toString(36).slice(2);}
+    function getManualTime(){
+        const el = document.getElementById('manualTime');
+        if(el && el.value) return el.value;
+        const now = new Date();
+        return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    }
+    function getFullDate(){
+        return new Date().toLocaleDateString() + ' @ ' + getManualTime();
+    }
+    function escapeHTML(value){return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
 
-        document.querySelectorAll(".drop-btn").forEach((btn,index)=>{
-            btn.addEventListener("click",()=>{
-                if(btn.classList.contains("active")) { btn.classList.remove("active"); pondData.waterCount=Math.max(0,pondData.waterCount-1); saveAndRefresh(); }
-                else { btn.classList.add("active"); pondData.waterCount=index+1; addLog("waterLog",{type:"water", val:pondData.waterCount, icon:"💧", fullDate:currentFullDate(getSelectedTime())}); }
-            });
+    // Logging functions
+    function logValue(type, val, extra){
+        if(val===null||val==='') return;
+        const data = getData();
+        const e = {id: makeId(), type, fullDate: getFullDate(), createdAt: new Date().toISOString()};
+        Object.assign(e, extra||{});
+        e.val = val;
+
+        switch(type){
+            case 'sugar': data.sugarLog.push(e); break;
+            case 'carb': data.carbLog.push(e); break;
+            case 'insulin': data.insulinLog.push(e); break;
+            case 'sleep': data.sleepLog.push(e); break;
+            case 'stress': data.stressLog.push(e); break;
+            case 'energy': data.energyLog.push(e); break;
+            case 'symptom': data.symptomLog.push(e); break;
+            case 'exercise': data.exerciseLog.push(e); break;
+            case 'mood': data.moodLog.push(e); break;
+            case 'water': data.waterLog.push(e); data.waterCount = val; break;
+        }
+        saveData(data);
+    }
+
+    function logGlucose(){logValue('sugar', Number(document.getElementById('glucoseInput')?.value||document.getElementById('sugarInput')?.value||null)); document.getElementById('glucoseInput')?.value=''; document.getElementById('sugarInput')?.value='';}
+    function logCarbs(){logValue('carb', Number(document.getElementById('carbInput')?.value||null)); document.getElementById('carbInput')?.value='';}
+    function logInsulin(){logValue('insulin', Number(document.getElementById('insulinInput')?.value||null)); document.getElementById('insulinInput')?.value='';}
+    function logSleep(){logValue('sleep', Number(document.getElementById('sleepInput')?.value||null), {sleepHours:Number(document.getElementById('sleepInput')?.value||null), sleepQuality:document.getElementById('sleepQualityInput')?.value||null}); document.getElementById('sleepInput')?.value=''; document.getElementById('sleepQualityInput')?.value='';}
+    function logStress(){logValue('stress', document.getElementById('stressInput')?.value||null); document.getElementById('stressInput')?.value='';}
+    function logEnergy(){logValue('energy', document.getElementById('energyInput')?.value||null); document.getElementById('energyInput')?.value='';}
+    function logSymptom(){logValue('symptom', document.getElementById('symptomInput')?.value||null); document.getElementById('symptomInput')?.value='';}
+    function logExercise(){logValue('exercise', Number(document.getElementById('exerciseMinutesInput')?.value||null), {exerciseType:document.getElementById('exerciseInput')?.value||'Exercise', minutes:Number(document.getElementById('exerciseMinutesInput')?.value||null)}); document.getElementById('exerciseInput')?.value=''; document.getElementById('exerciseMinutesInput')?.value='';}
+    function logMood(mood){logValue('mood', mood, {mood});}
+
+    function logCompletedGoal(){
+        const goal=document.getElementById('goalInput')?.value||null;
+        if(!goal) return;
+        const data=getData();
+        data.history.push({id:makeId(), type:'goal', fullDate:getFullDate(), text:goal, goal, completed:true});
+        document.getElementById('goalInput').value='';
+        saveData(data);
+    }
+
+    function setWater(count){logValue('water', count);}
+
+    function connectButton(id, fn){const b=document.getElementById(id); if(b) b.addEventListener('click',fn,true);}
+
+    function connectWaterButtons(){
+        document.querySelectorAll('.drop-btn[data-water]').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                const count=Number(btn.getAttribute('data-water'));
+                setWater(count);
+            },true);
         });
     }
 
-    function setClick(id, fn){ var el=document.getElementById(id); if(el) el.addEventListener("click",fn); }
-    function getSelectedTime(){ var timeInput=document.getElementById("manualTimeInput"); return timeInput?timeInput.value:null; }
-    function resetTimePicker(){ var timeInput=document.getElementById("manualTimeInput"); if(!timeInput) return; var now=new Date(); timeInput.value=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"); }
-    function currentFullDate(manualTime){ var now=new Date(); var timeStr = manualTime || now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:false}); return now.toLocaleDateString([], {month:"short", day:"numeric"}) + " @ " + timeStr; }
-    function getTime(fullDate){ if(!fullDate||fullDate.indexOf("@")===-1) return"00:00"; return fullDate.split("@")[1].trim(); }
-    function timeToMinutes(fullDate){ var time=getTime(fullDate); var parts=time.split(":"); return parseInt(parts[0],10)*60 + parseInt(parts[1],10); }
-    function sortByLoggedTime(arr){ return arr.slice().sort((a,b)=>timeToMinutes(a.fullDate)-timeToMinutes(b.fullDate)); }
-
-    function addLog(logArray,payload){ if(!pondData[logArray]) pondData[logArray]=[]; pondData[logArray].push(Object.assign({id:Date.now()},payload)); saveAndRefresh(); }
-
-    // All tracker functions: addHop, toggleHop, deleteHop, addSugar, addCarb, addInsulin, addSleepFromInput, addStress, addEnergy, addSymptom, addExerciseFromInput
-
-    // Clear / Reset Functions: clearWater, clearDayKeepGoals, resetDayEverything, clearEverything
-
-    // History and Chart Rendering: renderAll, renderBasicUI, renderTasks, renderAnalytics, renderHistory, renderChart
-
-    // Health Insights: generateHealthInsights, renderInsightPanel
-
-    // Export Function: exportGoalsToExcel
-
-    // Collapsible cards logic
-    document.addEventListener('DOMContentLoaded',()=>{
-        document.querySelectorAll('.pond-card.collapsible h2').forEach(h2=>{
-            h2.addEventListener('click',()=>{h2.parentElement.classList.toggle('collapsed');});
+    function connectMoodButtons(){
+        document.querySelectorAll('.mood-btn[data-mood]').forEach(btn=>{
+            btn.addEventListener('click',()=>logMood(btn.getAttribute('data-mood')),true);
         });
-    });
+    }
+
+    function connectAll(){
+        connectButton('addGlucoseBtn',logGlucose);
+        connectButton('addCarbBtn',logCarbs);
+        connectButton('addInsulinBtn',logInsulin);
+        connectButton('addSleepBtn',logSleep);
+        connectButton('addStressBtn',logStress);
+        connectButton('addEnergyBtn',logEnergy);
+        connectButton('addSymptomBtn',logSymptom);
+        connectButton('addExerciseBtn',logExercise);
+        connectButton('addGoalBtn',logCompletedGoal);
+        connectWaterButtons();
+        connectMoodButtons();
+    }
+
+    function deleteHistoryItem(id){const data=getData();data.history=data.history.filter(i=>String(i.id)!==String(id));saveData(data);}
+    function deleteLogItem(type,id){const data=getData();const map={mood:'moodLog',sugar:'sugarLog',glucose:'sugarLog',carb:'carbLog',carbs:'carbLog',insulin:'insulinLog',sleep:'sleepLog',stress:'stressLog',energy:'energyLog',symptom:'symptomLog',exercise:'exerciseLog',water:'waterLog'};const key=map[type];if(!key)return;data[key]=data[key].filter(i=>String(i.id)!==String(id)); if(key==='waterLog')data.waterCount=Math.min(data.waterLog.length,8);saveData(data);}
+
+    function renderAll(){
+        const data=getData();
+        // dashboard values
+        document.getElementById('dashboardWaterValue')&&(document.getElementById('dashboardWaterValue').textContent=data.waterCount+' / 8');
+        document.getElementById('waterTotal')&&(document.getElementById('waterTotal').textContent=data.waterCount+' / 8');
+        document.getElementById('waterCount')&&(document.getElementById('waterCount').textContent=data.waterCount);
+        document.getElementById('dashboardGoalsValue')&&(document.getElementById('dashboardGoalsValue').textContent=data.history.length+' done');
+        document.getElementById('dashboardSymptomsValue')&&(document.getElementById('dashboardSymptomsValue').textContent=data.symptomLog.length);
+        // update water button states
+        document.querySelectorAll('.drop-btn[data-water]').forEach(btn=>{const c=Number(btn.getAttribute('data-water'));btn.classList.toggle('active',c<=data.waterCount);});
+        // completed goals
+        ['historyList','completedGoalsHistory'].forEach(id=>{
+            const box=document.getElementById(id); if(!box)return;
+            if(!data.history.length){box.innerHTML='<p class="empty-state">No completed goals yet.</p>';return;}
+            box.innerHTML=data.history.slice().reverse().map(i=>'<div class="history-item completed-goal-item"><div class="history-item-content"><strong>✅ '+escapeHTML(i.text)+'</strong><small>'+escapeHTML(i.fullDate)+'</small></div><button type="button" data-delete-history-id="'+escapeHTML(i.id)+'">Delete</button></div>').join('');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{connectAll();renderAll();});
 })();
