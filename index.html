@@ -7,252 +7,106 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-
-    <!-- ExcelJS & FileSaver -->
+    <!-- ExcelJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.js"></script>
+    <!-- FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#9ed5a0">
 </head>
 <body>
 
-<div id="motivationBar" class="motivation-bar">
-    <span id="motivationText"></span>
-    <button id="bannerClose" class="btn-close-banner" aria-label="Dismiss">×</button>
-</div>
-
-<div class="container">
-    <header class="header">
-        <h1>✨ Progress Pond ✨</h1>
-        <p id="currentDate" class="date-display"></p>
-    </header>
-
-    <main class="main-stack">
-        <div class="dashboard-columns">
-            <div class="left-column">
-                <!-- Mood Card -->
-                <section class="pond-card collapsible">
-                    <h2>How are you feeling? 🐸</h2>
-                    <div class="card-body mood-options">
-                        <button class="mood-btn" data-mood="Happy">😊</button>
-                        <button class="mood-btn" data-mood="Calm">😌</button>
-                        <button class="mood-btn" data-mood="Focused">🧐</button>
-                        <button class="mood-btn" data-mood="Tired">😴</button>
-                        <button class="mood-btn" data-mood="Grumpy">😠</button>
-                        <button class="mood-btn" data-mood="Confused">😕</button>
-                        <button class="mood-btn" data-mood="Angry">😡</button>
-                        <button class="mood-btn" data-mood="Sad">😢</button>
-                        <button class="mood-btn" data-mood="Crying">😭</button>
-                        <button class="mood-btn" data-mood="Manic">🤪</button>
-                    </div>
-                </section>
-
-                <!-- Sleep Card -->
-                <section class="pond-card sleep-card collapsible">
-                    <h2>Sleep Tracker 😴</h2>
-                    <div class="card-body">
-                        <div class="input-row">
-                            <input type="number" step="0.25" id="sleepHoursInput" placeholder="Hours slept" min="0">
-                        </div>
-                        <div class="sleep-quality-row">
-                            <button onclick="addSleepFromInput('Bad')" class="mini-btn">Bad 😵</button>
-                            <button onclick="addSleepFromInput('Good')" class="mini-btn">Good 😌</button>
-                            <button onclick="addSleepFromInput('Great')" class="mini-btn">Great ✨</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Stress/Energy Card -->
-                <section class="pond-card collapsible">
-                    <h2>Mind + Energy 🧠⚡</h2>
-                    <div class="card-body">
-                        <div class="metric-group">
-                            <h3>Stress</h3>
-                            <div class="button-grid">
-                                <button onclick="addStress('Calm')" class="mini-btn">Calm 😌</button>
-                                <button onclick="addStress('Mild')" class="mini-btn">Mild 🙂</button>
-                                <button onclick="addStress('Moderate')" class="mini-btn">Moderate 😬</button>
-                                <button onclick="addStress('High')" class="mini-btn">High 😵</button>
-                                <button onclick="addStress('Extreme')" class="mini-btn">Extreme 🤯</button>
-                            </div>
-                        </div>
-                        <div class="metric-group">
-                            <h3>Energy</h3>
-                            <div class="button-grid">
-                                <button onclick="addEnergy('Exhausted')" class="mini-btn">Exhausted 🪫</button>
-                                <button onclick="addEnergy('Low')" class="mini-btn">Low 😴</button>
-                                <button onclick="addEnergy('Okay')" class="mini-btn">Okay 🙂</button>
-                                <button onclick="addEnergy('Good')" class="mini-btn">Good ⚡</button>
-                                <button onclick="addEnergy('Energetic')" class="mini-btn">Energetic 🚀</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Hydration Card -->
-                <section class="pond-card collapsible">
-                    <h2>Hydration 💧</h2>
-                    <div class="card-body">
-                        <div class="inline-controls">
-                            <span id="waterCountText" class="count-badge">0 / 8</span>
-                            <button id="clearWaterBtn" class="btn-util pink-util">Clear</button>
-                        </div>
-                        <div class="droplet-container">
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                            <button class="drop-btn">💧</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <div class="right-column">
-                <!-- Stats Card -->
-                <section class="pond-card collapsible">
-                    <h2>Stats Tracker 🩸🥣💉</h2>
-                    <div class="card-body">
-                        <div class="input-row">
-                            <input type="number" id="sugarInput" placeholder="mg/dL">
-                            <button id="addSugarBtn" class="btn-pond">Log Glucose</button>
-                        </div>
-                        <div class="input-row">
-                            <input type="number" id="carbInput" placeholder="Grams carbs">
-                            <button id="addCarbBtn" class="btn-pond">Log Carbs</button>
-                        </div>
-                        <div class="input-row">
-                            <input type="number" step="0.1" id="insulinInput" placeholder="Insulin units">
-                            <button id="addInsulinBtn" class="btn-pond">Log Insulin</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Exercise Card -->
-                <section class="pond-card collapsible">
-                    <h2>Exercise 🏃</h2>
-                    <div class="card-body">
-                        <div class="input-row">
-                            <input type="number" id="exerciseMinutesInput" placeholder="Minutes" min="1">
-                        </div>
-                        <div class="button-grid">
-                            <button onclick="addExerciseFromInput('Walk','Low')" class="mini-btn">Walk 🚶</button>
-                            <button onclick="addExerciseFromInput('Gym','High')" class="mini-btn">Gym 🏋️</button>
-                            <button onclick="addExerciseFromInput('Yoga','Low')" class="mini-btn">Yoga 🧘</button>
-                            <button onclick="addExerciseFromInput('Cardio','High')" class="mini-btn">Cardio ❤️</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Symptoms Card -->
-                <section class="pond-card collapsible">
-                    <h2>Symptoms 🩺</h2>
-                    <div class="card-body button-grid">
-                        <button onclick="addSymptom('Brain Fog')" class="mini-btn">Brain Fog 🌫️</button>
-                        <button onclick="addSymptom('Headache')" class="mini-btn">Headache 🤕</button>
-                        <button onclick="addSymptom('Shaky')" class="mini-btn">Shaky 🫨</button>
-                        <button onclick="addSymptom('Anxious')" class="mini-btn">Anxious 😰</button>
-                        <button onclick="addSymptom('Nauseous')" class="mini-btn">Nauseous 🤢</button>
-                        <button onclick="addSymptom('Exhausted')" class="mini-btn">Exhausted 😵</button>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- Pond Trends + Insights -->
-        <section class="pond-card trend-card">
-            <div class="card-header">
-                <h2>Pond Trends 📈</h2>
-                <div id="analyticsPanel" class="analytics-panel"></div>
-            </div>
-            <div class="chart-container">
-                <canvas id="healthChart"></canvas>
-            </div>
-            <div id="healthInsights" class="insight-box">
-                <h3>🌸 Gentle Pattern Insights</h3>
-                <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
-            </div>
-        </section>
-
-        <!-- Time Picker -->
-        <section class="pond-card">
-            <div class="card-header">
-                <h2>Log Time ⏰</h2>
-                <div class="time-control-row">
-                    <input type="time" id="manualTimeInput" class="time-picker">
-                    <button id="resetTimeBtn" class="btn-pond small-btn">Now</button>
-                </div>
-            </div>
-            <p class="helper-text">Set this before logging past entries.</p>
-        </section>
-
-        <!-- Daily Hops -->
-        <section class="pond-card">
-            <div class="card-header">
-                <h2>Daily Hops 🌿</h2>
-                <div class="progress-wrap">
-                    <div class="progress-bar"><div id="dailyProgress" class="progress-fill"></div></div>
-                    <span id="dailyProgressText">0%</span>
-                </div>
-            </div>
-            <div class="input-stack">
-                <div class="input-row">
-                    <input type="text" id="dailyInput" placeholder="Next hop...">
-                    <select id="priorityInput" class="priority-select">
-                        <option value="Low">Low 🌱</option>
-                        <option value="Medium" selected>Med 🌿</option>
-                        <option value="High">High 🔥</option>
-                    </select>
-                </div>
-                <button id="addDailyBtn" class="btn-pond full-width">Add Hop</button>
-            </div>
-            <ul id="dailyList" class="hops-list"></ul>
-        </section>
-
-    </main>
-</div>
-
-<footer id="historyFooter" class="achievement-bar collapsed">
-    <div class="bar-header">
-        <div class="centered-controls">
-            <button id="historyToggle" class="btn-util">Achievements ▼</button>
-            <button id="exportExcelBtn" class="btn-util export-btn">Export</button>
-            <button id="resetPondBtn" class="btn-util">Clear Day</button>
-            <button id="clearHistoryBtn" class="btn-util danger-util">Reset All</button>
-        </div>
+    <!-- Motivation Bar -->
+    <div id="motivationBar" class="motivation-bar">
+        <span id="motivationText"></span>
+        <button id="bannerClose" class="btn-close-banner" aria-label="Dismiss">×</button>
     </div>
-    <div class="achievement-content achievement-grid">
-        <div class="achieve-col">
-            <h4>Goals 🌿</h4>
-            <div id="dailyHistoryList" class="history-list"></div>
-        </div>
-        <div class="achieve-col">
-            <h4>Tracker History 🩸🧠😴</h4>
-            <div id="moodHistoryList" class="history-list"></div>
-        </div>
-        <div class="achieve-col">
-            <h4>Symptoms 🩺</h4>
-            <div id="symptomHistoryList" class="history-list"></div>
-        </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>✨ Progress Pond ✨</h1>
+            <p id="currentDate" class="date-display"></p>
+        </header>
+
+        <!-- TAB NAVIGATION -->
+        <nav class="tab-nav">
+            <button data-tab="home">Home</button>
+            <button data-tab="trackers">Health Trackers</button>
+            <button data-tab="trends">Trends</button>
+            <button data-tab="daily-hops">Daily Hops</button>
+            <button data-tab="history">History</button>
+        </nav>
+
+        <main class="main-stack">
+
+            <!-- HOME TAB -->
+            <section id="home" class="tab-content active">
+                <div class="averages-container">
+                    <div class="average-card" id="avg-glucose">--</div>
+                    <div class="average-card" id="avg-mood">--</div>
+                    <div class="average-card" id="avg-water">--</div>
+                    <div class="average-card" id="avg-stress">--</div>
+                    <div class="average-card" id="avg-energy">--</div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="healthChart"></canvas>
+                </div>
+
+                <div id="healthInsights-home" class="insight-box"></div>
+            </section>
+
+            <!-- HEALTH TRACKERS TAB -->
+            <section id="trackers" class="tab-content">
+                <!-- All the pond-card sections from your current HTML (moods, stats, sleep, stress/energy, symptoms, exercise, hydration) go here exactly as-is -->
+            </section>
+
+            <!-- TRENDS TAB -->
+            <section id="trends" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="healthChartTrends"></canvas>
+                </div>
+                <div id="healthInsights" class="insight-box"></div>
+            </section>
+
+            <!-- DAILY HOPS TAB -->
+            <section id="daily-hops" class="tab-content">
+                <!-- Daily Hops pond-card exactly as in your current HTML -->
+            </section>
+
+            <!-- HISTORY TAB -->
+            <section id="history" class="tab-content">
+                <div class="history-actions">
+                    <button id="exportExcelBtn" class="btn-util export-btn">Export</button>
+                    <button id="resetPondBtn" class="btn-util">Clear Day</button>
+                    <button id="clearHistoryBtn" class="btn-util danger-util">Reset All</button>
+                </div>
+                <div class="history-sections">
+                    <div class="history-section">
+                        <h4>Goals 🌿</h4>
+                        <div id="dailyHistoryList" class="history-list"></div>
+                    </div>
+                    <div class="history-section">
+                        <h4>Tracker History 🩸🧠😴</h4>
+                        <div id="moodHistoryList" class="history-list"></div>
+                    </div>
+                    <div class="history-section">
+                        <h4>Symptoms 🩺</h4>
+                        <div id="symptomHistoryList" class="history-list"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     </div>
-</footer>
 
-<script src="script.js"></script>
-<script>
-if("serviceWorker" in navigator){navigator.serviceWorker.register("service-worker.js");}
-
-// Collapsible card logic
- document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.pond-card.collapsible h2').forEach(h2=>{
-      h2.addEventListener('click',()=>{h2.parentElement.classList.toggle('collapsed');});
-  });
-});
-</script>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </body>
 </html>
