@@ -38,10 +38,8 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(1
 .tab-nav { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
 .tab-nav button { flex: 1; padding: 10px 6px; border-radius: 16px; border: 2px solid var(--frog); background: var(--soft); font-weight: bold; cursor: pointer; transition: 0.2s ease; }
 .tab-nav button.active { background: var(--frog); color: white; border-color: var(--dark-frog); }
-
 .tab-content { display: none; animation: fadeIn 0.3s ease; }
 .tab-content.active { display: block; }
-
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* POND CARDS */
