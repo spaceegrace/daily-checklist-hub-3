@@ -18,7 +18,6 @@
 </head>
 <body>
 
-    <!-- Motivation Bar -->
     <div id="motivationBar" class="motivation-bar">
         <span id="motivationText"></span>
         <button id="bannerClose" class="btn-close-banner" aria-label="Dismiss">×</button>
@@ -30,7 +29,6 @@
             <p id="currentDate" class="date-display"></p>
         </header>
 
-        <!-- TAB NAVIGATION -->
         <nav class="tab-nav">
             <button data-tab="home" class="active">Home</button>
             <button data-tab="trackers">Health Trackers</button>
@@ -51,14 +49,14 @@
                     <div class="average-card" id="avg-energy">--</div>
                 </div>
                 <div class="chart-container">
-                    <canvas id="healthChart"></canvas>
+                    <canvas id="healthChartTrends"></canvas>
                 </div>
-                <div id="healthInsights-home" class="insight-box"></div>
+                <div id="healthInsights" class="insight-box"></div>
             </section>
 
             <!-- HEALTH TRACKERS TAB -->
             <section id="trackers" class="tab-content">
-                <!-- MOODS -->
+                <!-- Mood Tracker -->
                 <section class="pond-card">
                     <h2>How are you feeling? 🐸</h2>
                     <div class="mood-options">
@@ -75,7 +73,7 @@
                     </div>
                 </section>
 
-                <!-- STATS -->
+                <!-- Stats Tracker -->
                 <section class="pond-card">
                     <h2>Stats Tracker 🩸🥣💉</h2>
                     <div class="input-row">
@@ -92,20 +90,20 @@
                     </div>
                 </section>
 
-                <!-- SLEEP -->
+                <!-- Sleep Tracker -->
                 <section class="pond-card sleep-card">
                     <h2>Sleep Tracker 😴</h2>
                     <div class="input-row">
                         <input type="number" step="0.25" id="sleepHoursInput" placeholder="Hours slept" min="0">
                     </div>
                     <div class="sleep-quality-row">
-                        <button onclick="addSleepFromInput('Bad')" class="mini-btn">Bad 😵</button>
-                        <button onclick="addSleepFromInput('Good')" class="mini-btn">Good 😌</button>
-                        <button onclick="addSleepFromInput('Great')" class="mini-btn">Great ✨</button>
+                        <button onclick="addSleep('Bad')" class="mini-btn">Bad 😵</button>
+                        <button onclick="addSleep('Good')" class="mini-btn">Good 😌</button>
+                        <button onclick="addSleep('Great')" class="mini-btn">Great ✨</button>
                     </div>
                 </section>
 
-                <!-- STRESS / ENERGY -->
+                <!-- Stress / Energy -->
                 <section class="pond-card">
                     <h2>Mind + Energy 🧠⚡</h2>
                     <div class="metric-group">
@@ -130,7 +128,7 @@
                     </div>
                 </section>
 
-                <!-- SYMPTOMS -->
+                <!-- Symptoms Tracker -->
                 <section class="pond-card">
                     <h2>Symptoms 🩺</h2>
                     <div class="button-grid">
@@ -143,7 +141,7 @@
                     </div>
                 </section>
 
-                <!-- EXERCISE -->
+                <!-- Exercise Tracker -->
                 <section class="pond-card">
                     <h2>Exercise 🏃</h2>
                     <div class="input-row">
@@ -157,7 +155,7 @@
                     </div>
                 </section>
 
-                <!-- HYDRATION -->
+                <!-- Hydration -->
                 <section class="pond-card">
                     <div class="card-header">
                         <h2>Hydration 💧</h2>
@@ -206,14 +204,6 @@
                 </section>
             </section>
 
-            <!-- TRENDS TAB -->
-            <section id="trends" class="tab-content">
-                <div class="chart-container">
-                    <canvas id="healthChartTrends"></canvas>
-                </div>
-                <div id="healthInsights" class="insight-box"></div>
-            </section>
-
             <!-- HISTORY TAB -->
             <section id="history" class="tab-content">
                 <div class="history-actions">
@@ -241,9 +231,5 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }
-    </script>
-
 </body>
 </html>
