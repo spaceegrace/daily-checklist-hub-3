@@ -26,7 +26,7 @@
 
 /* GLOBAL STYLING */
 * { box-sizing: border-box; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #ffe5ec 0%, #fff7fa 100%); color: var(--txt); margin: 0; padding-bottom: 120px; overflow-x: hidden; min-height: 100vh; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, var(--bg) 0%, #fff7fa 100%); color: var(--txt); margin: 0; padding-bottom: 120px; overflow-x: hidden; min-height: 100vh; }
 .container { width: 95%; max-width: 500px; margin: 0 auto; padding: 18px 10px 30px; }
 .header { text-align: center; margin-bottom: 20px; }
 .header h1 { margin-bottom: 5px; color: var(--dark-frog); font-size: 2rem; text-shadow: 2px 2px 0 white; }
@@ -45,10 +45,18 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(1
 /* POND CARDS */
 .pond-card { background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border-radius: 22px; border: 3px solid var(--frog); padding: 16px; margin-bottom: 20px; box-shadow: 6px 6px 0 var(--pink), 0 4px 18px var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .pond-card:hover { transform: translateY(-2px); box-shadow: 8px 8px 0 var(--pink), 0 6px 20px var(--shadow); }
-.trend-card { border-color: var(--dark-frog); box-shadow: 6px 6px 0 var(--water-border), 0 4px 18px var(--shadow); display: flex; flex-direction: column; align-items: stretch; }
 .card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
 .card-header h2 { margin: 0; font-size: 1.2rem; color: var(--dark-frog); }
-.analytics-panel { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; background: rgba(255,255,255,0.7); border: 2px solid var(--frog); border-radius: 12px; padding: 8px 10px; min-width: 110px; text-align: right; }
+
+/* BUTTONS */
+.mood-options, .button-grid, .sleep-quality-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.mood-btn, .mini-btn, .btn-pond { padding: 6px 10px; border-radius: 14px; border: 2px solid var(--frog); background: var(--soft); font-weight: bold; cursor: pointer; transition: 0.2s ease; flex: 1 1 auto; min-width: 48px; text-align: center; }
+.mood-btn:hover, .mini-btn:hover, .btn-pond:hover { background: var(--frog); color: white; border-color: var(--dark-frog); }
+
+/* DROPLETS */
+.droplet-container { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; margin-top: 6px; }
+.drop-btn { font-size: 1.6rem; background: none; border: 2px solid var(--frog); border-radius: 12px; padding: 4px; cursor: pointer; transition: 0.2s ease; }
+.drop-btn.active { background: var(--water-blue); border-color: var(--water-border); }
 
 /* CHART + INSIGHTS */
 .chart-container { position: relative; width: 100%; min-height: 320px; height: 320px; margin-top: 10px; }
@@ -63,7 +71,20 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(1
 .averages-container { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; justify-content: space-between; }
 .average-card { flex: 1 1 30%; background: var(--soft); border: 2px solid var(--frog); border-radius: 16px; padding: 10px 8px; text-align: center; font-weight: bold; color: var(--dark-frog); box-shadow: 2px 2px 0 var(--pink); }
 
+/* HISTORY SECTIONS */
+.history-sections { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.history-section { flex: 1 1 45%; background: var(--soft); border-radius: 14px; padding: 10px; border: 2px solid var(--frog); box-shadow: 2px 2px 0 var(--pink); min-width: 180px; }
+.history-section h4 { margin-top: 0; margin-bottom: 8px; color: var(--dark-frog); font-size: 1rem; }
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* DAILY HOPS */
+.hops-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.hops-list li { background: var(--soft); border: 2px solid var(--frog); border-radius: 12px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
+.hops-list li button { background: var(--pink); border: none; border-radius: 8px; padding: 2px 6px; cursor: pointer; color: white; font-size: 0.8rem; }
+
 /* MOBILE ADJUSTMENTS */
 @media (max-width: 480px) {
     .averages-container { flex-direction: column; }
+    .history-sections { flex-direction: column; }
+    .tab-nav button { flex: 1 1 100%; }
 }
