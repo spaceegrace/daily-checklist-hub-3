@@ -6,24 +6,17 @@
     <title>Progress Pond V26 🐸</title>
 
     <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#9ed5a0">
 
-    
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
     <!-- ExcelJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.js"></script>
     <!-- FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#9ed5a0">
 </head>
 <body>
-    
-
     <div id="motivationBar" class="motivation-bar">
         <span id="motivationText"></span>
         <button id="bannerClose" class="btn-close-banner" aria-label="Dismiss">×</button>
@@ -44,7 +37,6 @@
         </nav>
 
         <main class="main-stack">
-
             <!-- HOME TAB -->
             <section id="home" class="tab-content active">
                 <div class="averages-container">
@@ -66,10 +58,8 @@
                     <label for="manualTimeInput">Time:</label>
                     <input type="time" id="manualTimeInput">
                 </div>
-                <!-- Mood, Stats, Sleep, Stress/Energy, Symptoms, Exercise, Hydration -->
-                <!-- same content as previous HTML, unchanged IDs -->
 
-                                <!-- Mood Tracker -->
+                <!-- Mood Tracker -->
                 <section class="pond-card">
                     <h2>How are you feeling? 🐸</h2>
                     <div class="mood-options">
@@ -188,8 +178,6 @@
                         <button class="drop-btn">💧</button>
                     </div>
                 </section>
-            </section>
-
             </section>
 
             <!-- TRENDS TAB -->
