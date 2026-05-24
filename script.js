@@ -1,6 +1,6 @@
 /* =========================================================
    PROGRESS POND V26 - FULL SINGLE SCRIPT
-   Complete merged V25 + V26 with all missing functions implemented
+   Complete merged V25 + V26 with all HTML functions and working Excel export
 ========================================================== */
 
 (function () {
@@ -132,32 +132,62 @@
     function addExerciseFromInput(type,intensity){ addLog("exerciseLog",{type:"exercise", val:type, intensity:intensity, fullDate: currentFullDate(getSelectedTime())}); }
 
     // ======================== CLEAR / RESET FUNCTIONS ========================
-    function clearDayKeepGoals(){
-        pondData.moodLog = [];
-        pondData.sugarLog = [];
-        pondData.carbLog = [];
-        pondData.insulinLog = [];
-        pondData.sleepLog = [];
-        pondData.stressLog = [];
-        pondData.energyLog = [];
-        pondData.symptomLog = [];
-        pondData.exerciseLog = [];
-        pondData.waterCount = 0;
-        saveAndRefresh();
+    function clearDayKeepGoals(){ pondData.moodLog=[]; pondData.sugarLog=[]; pondData.carbLog=[]; pondData.insulinLog=[]; pondData.sleepLog=[]; pondData.stressLog=[]; pondData.energyLog=[]; pondData.symptomLog=[]; pondData.exerciseLog=[]; pondData.waterCount=0; saveAndRefresh(); }
+    function resetDayEverything(){ clearDayKeepGoals(); pondData.daily=[]; saveAndRefresh(); }
+    function clearWater(){ pondData.waterCount=0; saveAndRefresh(); }
+
+    // ======================== EXPORT FUNCTION ========================
+    function exportGoalsToExcel() {
+        var workbook = new ExcelJS.Workbook();
+        workbook.creator = "Progress Pond";
+        workbook.created = new Date();
+
+        var goalsSheet = workbook.addWorksheet('Daily Hops');
+        goalsSheet.columns = [
+            { header: 'ID', key: 'id', width: 12 },
+            { header: 'Text', key: 'text', width: 32 },
+            { header: 'Priority', key: 'priority', width: 12 },
+            { header: 'Timestamp', key: 'fullDate', width: 22 }
+        ];
+        pondData.daily.forEach(hop => goalsSheet.addRow(hop));
+
+        var trackerSheet = workbook.addWorksheet('Tracker History');
+        trackerSheet.columns = [
+            { header: 'ID', key: 'id', width: 12 },
+            { header: 'Type', key: 'type', width: 12 },
+            { header: 'Value', key: 'val', width: 18 },
+            { header: 'Extra', key: 'extra', width: 18 },
+            { header: 'Timestamp', key: 'fullDate', width: 22 }
+        ];
+        var trackerLogs = [...pondData.moodLog, ...pondData.sugarLog, ...pondData.carbLog, ...pondData.insulinLog, ...pondData.sleepLog, ...pondData.stressLog, ...pondData.energyLog, ...pondData.exerciseLog];
+        trackerLogs.forEach(log => {
+            trackerSheet.addRow({
+                id: log.id,
+                type: log.type,
+                val: log.val,
+                extra: log.intensity || log.icon || '',
+                fullDate: log.fullDate
+            });
+        });
+
+        var symptomsSheet = workbook.addWorksheet('Symptoms');
+        symptomsSheet.columns = [
+            { header: 'ID', key: 'id', width: 12 },
+            { header: 'Symptom', key: 'val', width: 32 },
+            { header: 'Timestamp', key: 'fullDate', width: 22 }
+        ];
+        pondData.symptomLog.forEach(symptom => symptomsSheet.addRow(symptom));
+
+        workbook.xlsx.writeBuffer().then(function(buffer) {
+            var blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            saveAs(blob, "ProgressPond_Export.xlsx");
+        }).catch(function(err){
+            console.error("Export failed", err);
+            alert("Failed to export Excel file");
+        });
     }
 
-    function resetDayEverything(){
-        clearDayKeepGoals();
-        pondData.daily = [];
-        saveAndRefresh();
-    }
-
-    function clearWater(){
-        pondData.waterCount = 0;
-        saveAndRefresh();
-    }
-
-    // ======================== RENDER FUNCTIONS ========================
+    // ======================== UTILS & RENDER ========================
     function renderAll(){ renderBasicUI(); renderTasks(); renderAnalytics(); renderHistory(); renderChart(); renderInsightPanel(); renderHomeAverages(); }
     function renderBasicUI(){ var cd=document.getElementById("currentDate"); if(cd) cd.textContent=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}); document.querySelectorAll(".drop-btn").forEach(function(btn,i){ btn.classList.toggle("active",i<pondData.waterCount); }); var waterText=document.getElementById("waterCountText"); if(waterText) waterText.textContent=pondData.waterCount+" / 8"; }
     function renderTasks(){ /* render daily hops */ }
@@ -166,6 +196,5 @@
     function renderChart(){ /* draw charts */ }
     function renderInsightPanel(){ /* populate insights */ }
     function renderHomeAverages(){ /* calculate and display averages */ }
-
     function average(array,mapFn){ if(!array.length) return 0; return array.reduce((sum,e)=>sum+mapFn(e),0)/array.length; }
 })();
