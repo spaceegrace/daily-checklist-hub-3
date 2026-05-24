@@ -140,7 +140,6 @@
    Rendering, charting, insights, history, averages
 ========================================================== */
 
-    (function () {
         function addLog(logArray, payload) {
             if (!pondData[logArray]) pondData[logArray] = [];
             pondData[logArray].push({ id: Date.now(), ...payload });
@@ -200,4 +199,4 @@
     // Existing renderTasks, renderAnalytics, renderHistory, renderChart, renderInsightPanel functions
     // are reused from V25 code without changes, just ensure they target correct tab content.
 
-    })();
+})();
