@@ -32,7 +32,7 @@
 
         <!-- TAB NAVIGATION -->
         <nav class="tab-nav">
-            <button data-tab="home">Home</button>
+            <button data-tab="home" class="active">Home</button>
             <button data-tab="trackers">Health Trackers</button>
             <button data-tab="trends">Trends</button>
             <button data-tab="daily-hops">Daily Hops</button>
@@ -50,388 +50,160 @@
                     <div class="average-card" id="avg-stress">--</div>
                     <div class="average-card" id="avg-energy">--</div>
                 </div>
-
                 <div class="chart-container">
                     <canvas id="healthChart"></canvas>
                 </div>
-
                 <div id="healthInsights-home" class="insight-box"></div>
             </section>
 
             <!-- HEALTH TRACKERS TAB -->
             <section id="trackers" class="tab-content">
-                            <!-- ========================================= -->
-            <!-- STATS -->
-            <!-- ========================================= -->
+                <!-- MOODS -->
+                <section class="pond-card">
+                    <h2>How are you feeling? 🐸</h2>
+                    <div class="mood-options">
+                        <button class="mood-btn" data-mood="Happy">😊</button>
+                        <button class="mood-btn" data-mood="Calm">😌</button>
+                        <button class="mood-btn" data-mood="Focused">🧐</button>
+                        <button class="mood-btn" data-mood="Tired">😴</button>
+                        <button class="mood-btn" data-mood="Grumpy">😠</button>
+                        <button class="mood-btn" data-mood="Confused">😕</button>
+                        <button class="mood-btn" data-mood="Angry">😡</button>
+                        <button class="mood-btn" data-mood="Sad">😢</button>
+                        <button class="mood-btn" data-mood="Crying">😭</button>
+                        <button class="mood-btn" data-mood="Manic">🤪</button>
+                    </div>
+                </section>
 
-            <section class="pond-card">
+                <!-- STATS -->
+                <section class="pond-card">
+                    <h2>Stats Tracker 🩸🥣💉</h2>
+                    <div class="input-row">
+                        <input type="number" id="sugarInput" placeholder="mg/dL">
+                        <button id="addSugarBtn" class="btn-pond">Log Glucose</button>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="carbInput" placeholder="Grams carbs">
+                        <button id="addCarbBtn" class="btn-pond">Log Carbs</button>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" step="0.1" id="insulinInput" placeholder="Insulin units">
+                        <button id="addInsulinBtn" class="btn-pond">Log Insulin</button>
+                    </div>
+                </section>
 
-                <h2>Stats Tracker 🩸🥣💉</h2>
+                <!-- SLEEP -->
+                <section class="pond-card sleep-card">
+                    <h2>Sleep Tracker 😴</h2>
+                    <div class="input-row">
+                        <input type="number" step="0.25" id="sleepHoursInput" placeholder="Hours slept" min="0">
+                    </div>
+                    <div class="sleep-quality-row">
+                        <button onclick="addSleepFromInput('Bad')" class="mini-btn">Bad 😵</button>
+                        <button onclick="addSleepFromInput('Good')" class="mini-btn">Good 😌</button>
+                        <button onclick="addSleepFromInput('Great')" class="mini-btn">Great ✨</button>
+                    </div>
+                </section>
 
-                <!-- GLUCOSE -->
+                <!-- STRESS / ENERGY -->
+                <section class="pond-card">
+                    <h2>Mind + Energy 🧠⚡</h2>
+                    <div class="metric-group">
+                        <h3>Stress</h3>
+                        <div class="button-grid">
+                            <button onclick="addStress('Calm')" class="mini-btn">Calm 😌</button>
+                            <button onclick="addStress('Mild')" class="mini-btn">Mild 🙂</button>
+                            <button onclick="addStress('Moderate')" class="mini-btn">Moderate 😬</button>
+                            <button onclick="addStress('High')" class="mini-btn">High 😵</button>
+                            <button onclick="addStress('Extreme')" class="mini-btn">Extreme 🤯</button>
+                        </div>
+                    </div>
+                    <div class="metric-group">
+                        <h3>Energy</h3>
+                        <div class="button-grid">
+                            <button onclick="addEnergy('Exhausted')" class="mini-btn">Exhausted 🪫</button>
+                            <button onclick="addEnergy('Low')" class="mini-btn">Low 😴</button>
+                            <button onclick="addEnergy('Okay')" class="mini-btn">Okay 🙂</button>
+                            <button onclick="addEnergy('Good')" class="mini-btn">Good ⚡</button>
+                            <button onclick="addEnergy('Energetic')" class="mini-btn">Energetic 🚀</button>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="input-row">
-
-                    <input
-                        type="number"
-                        id="sugarInput"
-                        placeholder="mg/dL"
-                    >
-
-                    <button
-                        id="addSugarBtn"
-                        class="btn-pond"
-                    >
-                        Log Glucose
-                    </button>
-
-                </div>
-
-                <!-- CARBS -->
-
-                <div class="input-row">
-
-                    <input
-                        type="number"
-                        id="carbInput"
-                        placeholder="Grams carbs"
-                    >
-
-                    <button
-                        id="addCarbBtn"
-                        class="btn-pond"
-                    >
-                        Log Carbs
-                    </button>
-
-                </div>
-
-                <!-- INSULIN -->
-
-                <div class="input-row">
-
-                    <input
-                        type="number"
-                        step="0.1"
-                        id="insulinInput"
-                        placeholder="Insulin units"
-                    >
-
-                    <button
-                        id="addInsulinBtn"
-                        class="btn-pond"
-                    >
-                        Log Insulin
-                    </button>
-
-                </div>
-
-            </section>
-
-            <!-- ========================================= -->
-            <!-- SLEEP -->
-            <!-- ========================================= -->
-
-            <section class="pond-card sleep-card">
-
-                <h2>Sleep Tracker 😴</h2>
-
-                <div class="input-row">
-
-                    <input
-                        type="number"
-                        step="0.25"
-                        id="sleepHoursInput"
-                        placeholder="Hours slept"
-                        min="0"
-                    >
-
-                </div>
-
-                <div class="sleep-quality-row">
-
-                    <button
-                        onclick="addSleepFromInput('Bad')"
-                        class="mini-btn"
-                    >
-                        Bad 😵
-                    </button>
-
-                    <button
-                        onclick="addSleepFromInput('Good')"
-                        class="mini-btn"
-                    >
-                        Good 😌
-                    </button>
-
-                    <button
-                        onclick="addSleepFromInput('Great')"
-                        class="mini-btn"
-                    >
-                        Great ✨
-                    </button>
-
-                </div>
-
-            </section>
-
-            <!-- ========================================= -->
-            <!-- STRESS / ENERGY -->
-            <!-- ========================================= -->
-
-            <section class="pond-card">
-
-                <h2>Mind + Energy 🧠⚡</h2>
-
-                <!-- STRESS -->
-
-                <div class="metric-group">
-
-                    <h3>Stress</h3>
-
+                <!-- SYMPTOMS -->
+                <section class="pond-card">
+                    <h2>Symptoms 🩺</h2>
                     <div class="button-grid">
-
-                        <button
-                            onclick="addStress('Calm')"
-                            class="mini-btn"
-                        >
-                            Calm 😌
-                        </button>
-
-                        <button
-                            onclick="addStress('Mild')"
-                            class="mini-btn"
-                        >
-                            Mild 🙂
-                        </button>
-
-                        <button
-                            onclick="addStress('Moderate')"
-                            class="mini-btn"
-                        >
-                            Moderate 😬
-                        </button>
-
-                        <button
-                            onclick="addStress('High')"
-                            class="mini-btn"
-                        >
-                            High 😵
-                        </button>
-
-                        <button
-                            onclick="addStress('Extreme')"
-                            class="mini-btn"
-                        >
-                            Extreme 🤯
-                        </button>
-
+                        <button onclick="addSymptom('Brain Fog')" class="mini-btn">Brain Fog 🌫️</button>
+                        <button onclick="addSymptom('Headache')" class="mini-btn">Headache 🤕</button>
+                        <button onclick="addSymptom('Shaky')" class="mini-btn">Shaky 🫨</button>
+                        <button onclick="addSymptom('Anxious')" class="mini-btn">Anxious 😰</button>
+                        <button onclick="addSymptom('Nauseous')" class="mini-btn">Nauseous 🤢</button>
+                        <button onclick="addSymptom('Exhausted')" class="mini-btn">Exhausted 😵</button>
                     </div>
+                </section>
 
-                </div>
-
-                <!-- ENERGY -->
-
-                <div class="metric-group">
-
-                    <h3>Energy</h3>
-
+                <!-- EXERCISE -->
+                <section class="pond-card">
+                    <h2>Exercise 🏃</h2>
+                    <div class="input-row">
+                        <input type="number" id="exerciseMinutesInput" placeholder="Minutes" min="1">
+                    </div>
                     <div class="button-grid">
-
-                        <button
-                            onclick="addEnergy('Exhausted')"
-                            class="mini-btn"
-                        >
-                            Exhausted 🪫
-                        </button>
-
-                        <button
-                            onclick="addEnergy('Low')"
-                            class="mini-btn"
-                        >
-                            Low 😴
-                        </button>
-
-                        <button
-                            onclick="addEnergy('Okay')"
-                            class="mini-btn"
-                        >
-                            Okay 🙂
-                        </button>
-
-                        <button
-                            onclick="addEnergy('Good')"
-                            class="mini-btn"
-                        >
-                            Good ⚡
-                        </button>
-
-                        <button
-                            onclick="addEnergy('Energetic')"
-                            class="mini-btn"
-                        >
-                            Energetic 🚀
-                        </button>
-
+                        <button onclick="addExerciseFromInput('Walk','Low')" class="mini-btn">Walk 🚶</button>
+                        <button onclick="addExerciseFromInput('Gym','High')" class="mini-btn">Gym 🏋️</button>
+                        <button onclick="addExerciseFromInput('Yoga','Low')" class="mini-btn">Yoga 🧘</button>
+                        <button onclick="addExerciseFromInput('Cardio','High')" class="mini-btn">Cardio ❤️</button>
                     </div>
+                </section>
 
-                </div>
-
-            </section>
-
-            <!-- ========================================= -->
-            <!-- SYMPTOMS -->
-            <!-- ========================================= -->
-
-            <section class="pond-card">
-
-                <h2>Symptoms 🩺</h2>
-
-                <div class="button-grid">
-
-                    <button
-                        onclick="addSymptom('Brain Fog')"
-                        class="mini-btn"
-                    >
-                        Brain Fog 🌫️
-                    </button>
-
-                    <button
-                        onclick="addSymptom('Headache')"
-                        class="mini-btn"
-                    >
-                        Headache 🤕
-                    </button>
-
-                    <button
-                        onclick="addSymptom('Shaky')"
-                        class="mini-btn"
-                    >
-                        Shaky 🫨
-                    </button>
-
-                    <button
-                        onclick="addSymptom('Anxious')"
-                        class="mini-btn"
-                    >
-                        Anxious 😰
-                    </button>
-
-                    <button
-                        onclick="addSymptom('Nauseous')"
-                        class="mini-btn"
-                    >
-                        Nauseous 🤢
-                    </button>
-
-                    <button
-                        onclick="addSymptom('Exhausted')"
-                        class="mini-btn"
-                    >
-                        Exhausted 😵
-                    </button>
-
-                </div>
-
-            </section>
-
-            <!-- ========================================= -->
-            <!-- EXERCISE -->
-            <!-- ========================================= -->
-
-            <section class="pond-card">
-
-                <h2>Exercise 🏃</h2>
-
-                <div class="input-row">
-
-                    <input
-                        type="number"
-                        id="exerciseMinutesInput"
-                        placeholder="Minutes"
-                        min="1"
-                    >
-
-                </div>
-
-                <div class="button-grid">
-
-                    <button
-                        onclick="addExerciseFromInput('Walk','Low')"
-                        class="mini-btn"
-                    >
-                        Walk 🚶
-                    </button>
-
-                    <button
-                        onclick="addExerciseFromInput('Gym','High')"
-                        class="mini-btn"
-                    >
-                        Gym 🏋️
-                    </button>
-
-                    <button
-                        onclick="addExerciseFromInput('Yoga','Low')"
-                        class="mini-btn"
-                    >
-                        Yoga 🧘
-                    </button>
-
-                    <button
-                        onclick="addExerciseFromInput('Cardio','High')"
-                        class="mini-btn"
-                    >
-                        Cardio ❤️
-                    </button>
-
-                </div>
-
-            </section>
-
-            <!-- ========================================= -->
-            <!-- HYDRATION -->
-            <!-- ========================================= -->
-
-            <section class="pond-card">
-
-                <div class="card-header">
-
-                    <h2>Hydration 💧</h2>
-
-                    <div class="inline-controls">
-
-                        <span
-                            id="waterCountText"
-                            class="count-badge"
-                        >
-                            0 / 8
-                        </span>
-
-                        <button
-                            id="clearWaterBtn"
-                            class="btn-util pink-util"
-                        >
-                            Clear
-                        </button>
-
+                <!-- HYDRATION -->
+                <section class="pond-card">
+                    <div class="card-header">
+                        <h2>Hydration 💧</h2>
+                        <div class="inline-controls">
+                            <span id="waterCountText" class="count-badge">0 / 8</span>
+                            <button id="clearWaterBtn" class="btn-util pink-util">Clear</button>
+                        </div>
                     </div>
+                    <div class="droplet-container">
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                        <button class="drop-btn">💧</button>
+                    </div>
+                </section>
+            </section>
 
-                </div>
-
-                <div class="droplet-container">
-
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-                    <button class="drop-btn">💧</button>
-
-                </div>
-
+            <!-- DAILY HOPS TAB -->
+            <section id="daily-hops" class="tab-content">
+                <section class="pond-card">
+                    <div class="card-header">
+                        <h2>Daily Hops 🌿</h2>
+                        <div class="progress-wrap">
+                            <div class="progress-bar">
+                                <div id="dailyProgress" class="progress-fill"></div>
+                            </div>
+                            <span id="dailyProgressText">0%</span>
+                        </div>
+                    </div>
+                    <div class="input-stack">
+                        <div class="input-row">
+                            <input type="text" id="dailyInput" placeholder="Next hop...">
+                            <select id="priorityInput" class="priority-select">
+                                <option value="Low">Low 🌱</option>
+                                <option value="Medium" selected>Med 🌿</option>
+                                <option value="High">High 🔥</option>
+                            </select>
+                        </div>
+                        <button id="addDailyBtn" class="btn-pond full-width">Add Hop</button>
+                    </div>
+                    <ul id="dailyList" class="hops-list"></ul>
+                </section>
             </section>
 
             <!-- TRENDS TAB -->
@@ -440,101 +212,6 @@
                     <canvas id="healthChartTrends"></canvas>
                 </div>
                 <div id="healthInsights" class="insight-box"></div>
-            </section>
-
-            <!-- DAILY HOPS TAB -->
-            <section id="daily-hops" class="tab-content">
-                <!-- Daily Hops pond-card exactly as in your current HTML -->
-                
-            <!-- ========================================= -->
-            <!-- DAILY HOPS -->
-            <!-- ========================================= -->
-
-            <section class="pond-card">
-
-                <div class="card-header">
-
-                    <h2>Daily Hops 🌿</h2>
-
-                    <div class="progress-wrap">
-
-                        <div class="progress-bar">
-
-                            <div
-                                id="dailyProgress"
-                                class="progress-fill"
-                            ></div>
-
-                        </div>
-
-                        <span id="dailyProgressText">
-                            0%
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <div class="input-stack">
-
-                    <div class="input-row">
-
-                        <input
-                            type="text"
-                            id="dailyInput"
-                            placeholder="Next hop..."
-                        >
-
-                        <select
-                            id="priorityInput"
-                            class="priority-select"
-                        >
-
-                            <option value="Low">
-                                Low 🌱
-                            </option>
-
-                            <option value="Medium" selected>
-                                Med 🌿
-                            </option>
-
-                            <option value="High">
-                                High 🔥
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <button
-                        id="addDailyBtn"
-                        class="btn-pond full-width"
-                    >
-                        Add Hop
-                    </button>
-
-                </div>
-
-                <ul
-                    id="dailyList"
-                    class="hops-list"
-                ></ul>
-
-            </section>
-
-        </main>
-
-    </div>
-
-    <!-- ================================================= -->
-    <!-- ACHIEVEMENT BAR -->
-    <!-- ================================================= -->
-
-    <footer
-        id="historyFooter"
-        class="achievement-bar collapsed"
-    >
-
             </section>
 
             <!-- HISTORY TAB -->
@@ -565,9 +242,8 @@
 
     <script src="script.js"></script>
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }
     </script>
+
 </body>
 </html>
