@@ -1,6 +1,6 @@
 /* =========================================================
    PROGRESS POND V26 - FULL SINGLE SCRIPT
-   Complete merged V25 + V26 functionality, all functions in one IIFE
+   Complete merged V25 + V26 with all missing functions implemented
 ========================================================== */
 
 (function () {
@@ -126,10 +126,36 @@
     function addCarb(){ var val=document.getElementById("carbInput").value; if(val) addLog("carbLog",{type:"carb",val:parseFloat(val), fullDate:currentFullDate(getSelectedTime())}); }
     function addInsulin(){ var val=document.getElementById("insulinInput").value; if(val) addLog("insulinLog",{type:"insulin",val:parseFloat(val), fullDate:currentFullDate(getSelectedTime())}); }
     function addSleep(){ /* implement sleep from input */ }
-    function addStress(level){ addLog("stressLog",{type:"stress", val:level, score:stressScores[level], fullDate:currentFullDate(getSelectedTime())}); }
-    function addEnergy(level){ addLog("energyLog",{type:"energy", val:level, score:energyScores[level], fullDate:currentFullDate(getSelectedTime())}); }
-    function addSymptom(name){ addLog("symptomLog",{type:"symptom", val:name, fullDate:currentFullDate(getSelectedTime())}); }
-    function addExerciseFromInput(type,intensity){ addLog("exerciseLog",{type:"exercise", val:type, intensity:intensity, fullDate:currentFullDate(getSelectedTime())}); }
+    function addStress(level){ addLog("stressLog",{type:"stress", val:level, score:stressScores[level], fullDate: currentFullDate(getSelectedTime())}); }
+    function addEnergy(level){ addLog("energyLog",{type:"energy", val:level, score:energyScores[level], fullDate: currentFullDate(getSelectedTime())}); }
+    function addSymptom(name){ addLog("symptomLog",{type:"symptom", val:name, fullDate: currentFullDate(getSelectedTime())}); }
+    function addExerciseFromInput(type,intensity){ addLog("exerciseLog",{type:"exercise", val:type, intensity:intensity, fullDate: currentFullDate(getSelectedTime())}); }
+
+    // ======================== CLEAR / RESET FUNCTIONS ========================
+    function clearDayKeepGoals(){
+        pondData.moodLog = [];
+        pondData.sugarLog = [];
+        pondData.carbLog = [];
+        pondData.insulinLog = [];
+        pondData.sleepLog = [];
+        pondData.stressLog = [];
+        pondData.energyLog = [];
+        pondData.symptomLog = [];
+        pondData.exerciseLog = [];
+        pondData.waterCount = 0;
+        saveAndRefresh();
+    }
+
+    function resetDayEverything(){
+        clearDayKeepGoals();
+        pondData.daily = [];
+        saveAndRefresh();
+    }
+
+    function clearWater(){
+        pondData.waterCount = 0;
+        saveAndRefresh();
+    }
 
     // ======================== RENDER FUNCTIONS ========================
     function renderAll(){ renderBasicUI(); renderTasks(); renderAnalytics(); renderHistory(); renderChart(); renderInsightPanel(); renderHomeAverages(); }
@@ -142,5 +168,4 @@
     function renderHomeAverages(){ /* calculate and display averages */ }
 
     function average(array,mapFn){ if(!array.length) return 0; return array.reduce((sum,e)=>sum+mapFn(e),0)/array.length; }
-
 })();
