@@ -245,6 +245,38 @@ body {
   backdrop-filter: blur(5px);
 }
 
+/* ==================== SUMMARY STATS ==================== */
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, rgba(158, 213, 160, 0.15), rgba(255, 194, 209, 0.1));
+  border: 2px solid var(--frog);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--dark-frog);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--frog);
+}
+
 /* ==================== CHART & INSIGHTS ==================== */
 
 .chart-container {
@@ -642,6 +674,8 @@ input:focus, select:focus {
   border: 2px solid var(--frog);
   border-radius: 18px;
   padding: 12px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .achieve-col h4 {
@@ -653,6 +687,9 @@ input:focus, select:focus {
   padding-bottom: 4px;
   letter-spacing: 0.08em;
   color: var(--dark-frog);
+  position: sticky;
+  top: 0;
+  background: rgba(158, 213, 160, 0.1);
 }
 
 .history-list {
@@ -671,6 +708,7 @@ input:focus, select:focus {
   align-items: center;
   gap: 8px;
   color: var(--txt);
+  line-height: 1.4;
 }
 
 .achievement-controls {
@@ -741,7 +779,7 @@ input:focus, select:focus {
   background: rgba(255,255,255,0.08);
   border-radius: 12px;
   padding: 9px 10px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -760,28 +798,6 @@ input:focus, select:focus {
   margin-top: 3px;
   font-size: 0.68rem;
   opacity: 0.72;
-}
-
-.history-item button {
-  background: rgba(239,68,68,0.85);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: white;
-  border-radius: 999px;
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.history-item button:hover {
-  background: var(--danger);
-  transform: scale(1.1);
 }
 
 .btn-util {
@@ -851,6 +867,10 @@ input:focus, select:focus {
   }
 
   .achievement-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-stats {
     grid-template-columns: 1fr;
   }
 }
@@ -944,6 +964,14 @@ input:focus, select:focus {
 
   .achieve-col h4 {
     font-size: 0.8rem;
+  }
+
+  .stat-box {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
   }
 }
 
