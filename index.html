@@ -12,6 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
+    <!-- HTML2Canvas for chart export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
@@ -39,7 +42,7 @@
     </nav>
 
     <main class="main-stack">
-        <!-- HOME TAB: Log Time + Graph Only -->
+        <!-- HOME TAB: Log Time + Goals + Summary Stats -->
         <div class="tab-content active" id="home">
             <!-- Time Picker -->
             <section class="pond-card">
@@ -51,6 +54,21 @@
                     </div>
                 </div>
                 <p class="helper-text">Set this before logging past entries.</p>
+            </section>
+
+            <!-- Daily Summary Stats -->
+            <section class="pond-card">
+                <h2>Today's Summary 📊</h2>
+                <div class="summary-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Average Mood</div>
+                        <div class="stat-value" id="todayMoodAvg">—</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Average Glucose</div>
+                        <div class="stat-value" id="todayGlucoseAvg">—</div>
+                    </div>
+                </div>
             </section>
 
             <!-- Daily Hops -->
@@ -74,21 +92,6 @@
                     <button id="addDailyBtn" class="btn-pond full-width">Add Hop</button>
                 </div>
                 <ul id="dailyList" class="hops-list"></ul>
-            </section>
-
-            <!-- Pond Trends + Graph (HOME ONLY) -->
-            <section class="pond-card trend-card">
-                <div class="card-header">
-                    <h2>Pond Trends 📈</h2>
-                    <div id="analyticsPanel" class="analytics-panel"></div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="healthChart"></canvas>
-                </div>
-                <div id="healthInsights" class="insight-box">
-                    <h3>🌸 Gentle Pattern Insights</h3>
-                    <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
-                </div>
             </section>
         </div>
 
@@ -229,11 +232,11 @@
             </div>
         </div>
 
-        <!-- INSIGHTS TAB -->
+        <!-- INSIGHTS TAB (WITH GRAPH ONLY) -->
         <div class="tab-content" id="insights">
             <section class="pond-card trend-card">
                 <div class="card-header">
-                    <h2>Analytics & Trends 📊</h2>
+                    <h2>Pond Trends 📈</h2>
                     <div id="insightAnalyticsPanel" class="analytics-panel"></div>
                 </div>
                 <div class="chart-container">
@@ -255,7 +258,7 @@
                 </div>
                 <div class="achieve-col">
                     <h4>Tracker History 🩸🧠😴</h4>
-                    <div id="achievementMoodHistoryList" class="history-list"></div>
+                    <div id="achievementTrackerHistoryList" class="history-list"></div>
                 </div>
                 <div class="achieve-col">
                     <h4>Symptoms 🩺</h4>
@@ -265,7 +268,7 @@
 
             <!-- Control Buttons -->
             <div class="achievement-controls">
-                <button id="tabExportExcelBtn" class="btn-pond export-btn full-width">Export Data</button>
+                <button id="tabExportExcelBtn" class="btn-pond export-btn full-width">📊 Export to Excel</button>
                 <button id="tabClearDayBtn" class="btn-pond full-width">Clear Day</button>
                 <button id="tabClearHistoryBtn" class="btn-pond danger-btn full-width">Reset All</button>
             </div>
