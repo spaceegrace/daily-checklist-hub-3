@@ -1,5 +1,5 @@
 // =========================================================
-// PROGRESS POND V26+ - MODULAR & ENHANCED
+// PROGRESS POND V26+ - MODULAR & ENHANCED WITH TABS
 // =========================================================
 
 class ProgressPond {
@@ -21,10 +21,11 @@ class ProgressPond {
             waterCount: 0,
             streak: 0,
             lastStreakDate: null,
-            theme: 'light' // Add theme support
+            theme: 'light'
         };
 
         this.chart = null;
+        this.insightChart = null;
         this.storageKey = "ProgressPond_V26";
         this.init();
     }
@@ -71,11 +72,10 @@ class ProgressPond {
         this.addButtonListener("clearWaterBtn", () => this.clearWater());
         this.addButtonListener("resetTimeBtn", () => this.resetTimePicker());
 
-        // Control buttons
-        this.addButtonListener("resetPondBtn", () => this.clearDayKeepGoals());
-        this.addButtonListener("clearHistoryBtn", () => this.resetDayEverything());
-        this.addButtonListener("exportExcelBtn", () => this.exportData());
-        this.addButtonListener("historyToggle", () => this.toggleHistory());
+        // Tab control buttons
+        this.addButtonListener("tabExportExcelBtn", () => this.exportData());
+        this.addButtonListener("tabClearDayBtn", () => this.clearDayKeepGoals());
+        this.addButtonListener("tabClearHistoryBtn", () => this.resetDayEverything());
         this.addButtonListener("bannerClose", () => this.closeBanner());
 
         // Mood buttons
@@ -282,7 +282,7 @@ class ProgressPond {
         this.renderTasks();
         this.renderAnalytics();
         this.renderHistory();
-        this.renderChart();
+        this.renderChart('healthChart', 'analyticsPanel', 'healthInsights');
     }
 
     renderBasicUI() {
@@ -350,27 +350,72 @@ class ProgressPond {
     }
 
     renderAnalytics() {
+        // Home tab analytics
         const panel = document.getElementById("analyticsPanel");
-        if (!panel) return;
+        if (panel) {
+            const todayMood = this.data.moodLog.filter(m => m.fullDate?.includes(this.getTodayDate()));
+            const todayEnergy = this.data.energyLog.filter(e => e.fullDate?.includes(this.getTodayDate()));
+            const todayStress = this.data.stressLog.filter(s => s.fullDate?.includes(this.getTodayDate()));
+            const todayExercise = this.data.exerciseLog.filter(e => e.fullDate?.includes(this.getTodayDate()));
 
-        const todayMood = this.data.moodLog.filter(m => m.fullDate?.includes(this.getTodayDate()));
-        const todayEnergy = this.data.energyLog.filter(e => e.fullDate?.includes(this.getTodayDate()));
-        const todayStress = this.data.stressLog.filter(s => s.fullDate?.includes(this.getTodayDate()));
-        const todayExercise = this.data.exerciseLog.filter(e => e.fullDate?.includes(this.getTodayDate()));
+            const stats = [
+                `📊 Logs: ${todayMood.length + todayEnergy.length + todayStress.length}`,
+                `🏃 Exercise: ${todayExercise.reduce((sum, e) => sum + e.minutes, 0)}m`,
+                `💧 Water: ${this.data.waterCount}/8`
+            ];
 
-        const stats = [
-            `📊 Logs: ${todayMood.length + todayEnergy.length + todayStress.length}`,
-            `🏃 Exercise: ${todayExercise.reduce((sum, e) => sum + e.minutes, 0)}m`,
-            `💧 Water: ${this.data.waterCount}/8`
-        ];
+            panel.innerHTML = stats.map(s => `<div>${s}</div>`).join("");
+        }
 
-        panel.innerHTML = stats.map(s => `<div>${s}</div>`).join("");
+        // Insights tab analytics
+        const insightPanel = document.getElementById("insightAnalyticsPanel");
+        if (insightPanel) {
+            const last7 = this.getLast7Days();
+            const avgMood = this.calculateAverageMood(last7);
+            const avgEnergy = this.calculateAverageEnergy(last7);
+            const totalExercise = this.data.exerciseLog.reduce((sum, e) => sum + e.minutes, 0);
+
+            const insightStats = [
+                `📊 7-Day Avg Mood: ${avgMood.toFixed(1)}/10`,
+                `⚡ 7-Day Avg Energy: ${avgEnergy.toFixed(1)}/10`,
+                `🏃 Total Exercise: ${totalExercise}m`
+            ];
+
+            insightPanel.innerHTML = insightStats.map(s => `<div>${s}</div>`).join("");
+        }
+    }
+
+    calculateAverageMood(days) {
+        let total = 0, count = 0;
+        days.forEach(day => {
+            const logs = this.data.moodLog.filter(log => log.fullDate?.includes(day)) || [];
+            logs.forEach(log => {
+                const score = this.moodScores[log.val] || 5;
+                total += score;
+                count++;
+            });
+        });
+        return count === 0 ? 0 : total / count;
+    }
+
+    calculateAverageEnergy(days) {
+        let total = 0, count = 0;
+        days.forEach(day => {
+            const logs = this.data.energyLog.filter(log => log.fullDate?.includes(day)) || [];
+            logs.forEach(log => {
+                const score = this.energyScores[log.val] || 5;
+                total += score;
+                count++;
+            });
+        });
+        return count === 0 ? 0 : total / count;
     }
 
     renderHistory() {
-        const dailyHistory = document.getElementById("dailyHistoryList");
-        const moodHistory = document.getElementById("moodHistoryList");
-        const symptomHistory = document.getElementById("symptomHistoryList");
+        // Achievement tab history
+        const dailyHistory = document.getElementById("achievementDailyHistoryList");
+        const moodHistory = document.getElementById("achievementMoodHistoryList");
+        const symptomHistory = document.getElementById("achievementSymptomHistoryList");
 
         if (dailyHistory) {
             const completed = this.data.daily.filter(t => t.completed);
@@ -395,17 +440,22 @@ class ProgressPond {
         }
     }
 
-    renderChart() {
-        const ctx = document.getElementById("healthChart");
+    renderChart(canvasId = 'healthChart', panelId = 'analyticsPanel', insightId = 'healthInsights') {
+        const ctx = document.getElementById(canvasId);
         if (!ctx) return;
 
         const last7Days = this.getLast7Days();
         const moodByDay = this.aggregateByDay("moodLog", last7Days);
         const energyByDay = this.aggregateByDay("energyLog", last7Days);
 
-        if (this.chart) this.chart.destroy();
+        // Destroy existing chart if needed
+        if (canvasId === 'healthChart' && this.chart) {
+            this.chart.destroy();
+        } else if (canvasId === 'insightChart' && this.insightChart) {
+            this.insightChart.destroy();
+        }
 
-        this.chart = new Chart(ctx, {
+        const chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: last7Days,
@@ -436,6 +486,12 @@ class ProgressPond {
                 }
             }
         });
+
+        if (canvasId === 'healthChart') {
+            this.chart = chartInstance;
+        } else if (canvasId === 'insightChart') {
+            this.insightChart = chartInstance;
+        }
     }
 
     aggregateByDay(logType, days) {
@@ -447,6 +503,8 @@ class ProgressPond {
                 if (log.val === 'Happy') return 9;
                 if (log.val === 'Sad') return 2;
                 if (log.val === 'Energetic') return 10;
+                if (log.val === 'Exhausted') return 1;
+                if (log.val === 'Calm') return 1;
                 return 5;
             });
             return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
@@ -618,10 +676,6 @@ class ProgressPond {
         }
     }
 
-    toggleHistory() {
-        document.getElementById("historyFooter")?.classList.toggle("collapsed");
-    }
-
     closeBanner() {
         document.getElementById("motivationBar").style.display = "none";
     }
@@ -637,13 +691,4 @@ class ProgressPond {
 let pond;
 document.addEventListener("DOMContentLoaded", () => {
     pond = new ProgressPond();
-});
-
-// Collapsible cards logic
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.pond-card.collapsible h2').forEach(h2 => {
-        h2.addEventListener('click', () => {
-            h2.parentElement.classList.toggle('collapsed');
-        });
-    });
 });
