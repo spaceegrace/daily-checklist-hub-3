@@ -415,50 +415,139 @@ class ProgressPond {
         }
     }
 
-    renderChart(canvasId = 'insightChart', panelId = 'insightAnalyticsPanel', insightId = 'insightHealthInsights') {
-        const ctx = document.getElementById(canvasId);
-        if (!ctx) return;
+   
+        renderChart(canvasId = 'insightChart', panelId = 'insightAnalyticsPanel', insightId = 'insightHealthInsights') {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
 
-        const last7Days = this.getLast7Days();
-        const moodByDay = this.aggregateByDay("moodLog", last7Days);
-        const energyByDay = this.aggregateByDay("energyLog", last7Days);
+            const healthEntries = this.getHealthTrackerChartEntries();
 
-        // Destroy existing chart if needed
-        if (this.insightChart) {
-            this.insightChart.destroy();
+            if (this.insightChart) {
+                this.insightChart.destroy();
+            }
+
+            this.insightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: healthEntries.map(entry => entry.label),
+                    datasets: [
+                        {
+                            label: 'Mood',
+                            data: healthEntries.map(entry => entry.mood),
+                            borderColor: '#ffc2d1',
+                            backgroundColor: 'rgba(255, 194, 209, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Energy',
+                            data: healthEntries.map(entry => entry.energy),
+                            borderColor: '#00ff99',
+                            backgroundColor: 'rgba(0, 255, 153, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Stress',
+                            data: healthEntries.map(entry => entry.stress),
+                            borderColor: '#ff00aa',
+                            backgroundColor: 'rgba(255, 0, 170, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Sleep Quality',
+                            data: healthEntries.map(entry => entry.sleep),
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#5d4a4a' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: { color: '#5d4a4a' }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#5d4a4a',
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            const insightPanel = document.getElementById(panelId);
+            if (insightPanel) {
+                insightPanel.innerHTML = `
+                    <div>📊 Health Entries: ${healthEntries.length}</div>
+                    <div>😊 Mood Logs: ${this.data.moodLog.length}</div>
+                    <div>⚡ Energy Logs: ${this.data.energyLog.length}</div>
+                    <div>😰 Stress Logs: ${this.data.stressLog.length}</div>
+                `;
+            }
         }
 
-        const chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: last7Days,
-                datasets: [
-                    {
-                        label: 'Mood',
-                        data: moodByDay,
-                        borderColor: '#ffc2d1',
-                        backgroundColor: 'rgba(255, 194, 209, 0.1)',
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Energy',
-                        data: energyByDay,
-                        borderColor: '#00ff99',
-                        backgroundColor: 'rgba(0, 255, 153, 0.1)',
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#5d4a4a' } } },
-                scales: {
-                    y: { beginAtZero: true, max: 10, ticks: { color: '#5d4a4a' } },
-                    x: { ticks: { color: '#5d4a4a' } }
-                }
-            }
-        });
+        getHealthTrackerChartEntries() {
+            const entries = [];
+
+            this.data.moodLog.forEach(log => {
+                entries.push({
+                    date: log.fullDate || '',
+                    label: log.fullDate || 'Mood',
+                    mood: this.moodScores[log.val] || null,
+                    energy: null,
+                    stress: null,
+                    sleep: null
+                });
+            });
+
+            this.data.energyLog.forEach(log => {
+                entries.push({
+                    date: log.fullDate || '',
+                    label: log.fullDate || 'Energy',
+                    mood: null,
+                    energy: this.energyScores[log.val] || null,
+                    stress: null,
+                    sleep: null
+                });
+            });
+
+            this.data.stressLog.forEach(log => {
+                entries.push({
+                    date: log.fullDate || '',
+                    label: log.fullDate || 'Stress',
+                    mood: null,
+                    energy: null,
+                    stress: this.stressScores[log.val] || null,
+                    sleep: null
+                });
+            });
+
+            this.data.sleepLog.forEach(log => {
+                entries.push({
+                    date: log.fullDate || '',
+                    label: log.fullDate || 'Sleep',
+                    mood: null,
+                    energy: null,
+                    stress: null,
+                    sleep: this.sleepQualityScores[log.quality] || null
+                });
+                });
+
+            return entries.sort((a, b) => new Date(a.date.split(' @ ')[0]) - new Date(b.date.split(' @ ')[0]));
+        }
 
         this.insightChart = chartInstance;
 
