@@ -1,9 +1,12 @@
 // =========================================================
-// PROGRESS POND V26+ - MODULAR & ENHANCED WITH TABS
+// PROGRESS POND V26+ - FULL UPDATED SCRIPT
 // =========================================================
 
 class ProgressPond {
     constructor() {
+        this.storageKey = "ProgressPond_V26";
+        this.insightChart = null;
+
         this.data = {
             daily: [],
             history: [],
@@ -21,46 +24,71 @@ class ProgressPond {
             waterCount: 0,
             streak: 0,
             lastStreakDate: null,
-            theme: 'light'
+            theme: "light"
         };
 
-        this.insightChart = null;
-        this.storageKey = "ProgressPond_V26";
         this.init();
     }
 
     init() {
         this.loadStorage();
         this.setupMoodData();
+        this.checkDailyReset();
         this.setupEventListeners();
+        this.setupTabs();
+        this.setupCollapsibles();
         this.renderAll();
         this.setMotivation();
         this.resetTimePicker();
-        this.checkDailyReset();
     }
 
     setupMoodData() {
         this.moodScores = {
-            Manic: 10, Happy: 9, Focused: 8, Calm: 7, Tired: 6,
-            Confused: 5, Grumpy: 4, Angry: 3, Sad: 2, Crying: 1
+            Manic: 10,
+            Happy: 9,
+            Focused: 8,
+            Calm: 7,
+            Tired: 6,
+            Confused: 5,
+            Grumpy: 4,
+            Angry: 3,
+            Sad: 2,
+            Crying: 1
         };
 
         this.energyScores = {
-            Exhausted: 1, Low: 3, Okay: 5, Good: 7, Energetic: 10
+            Exhausted: 1,
+            Low: 3,
+            Okay: 5,
+            Good: 7,
+            Energetic: 10
         };
 
         this.stressScores = {
-            Calm: 1, Mild: 3, Moderate: 5, High: 7, Extreme: 10
+            Calm: 1,
+            Mild: 3,
+            Moderate: 5,
+            High: 7,
+            Extreme: 10
         };
 
         this.sleepQualityScores = {
-            Bad: 3, Good: 7, Great: 10
+            Bad: 3,
+            Good: 7,
+            Great: 10
         };
 
         this.moodEmojis = {
-            Happy: "😊", Calm: "😌", Focused: "🧐", Tired: "😴",
-            Grumpy: "😠", Confused: "😕", Angry: "😡", Sad: "😢",
-            Crying: "😭", Manic: "🤪"
+            Happy: "😊",
+            Calm: "😌",
+            Focused: "🧐",
+            Tired: "😴",
+            Grumpy: "😠",
+            Confused: "😕",
+            Angry: "😡",
+            Sad: "😢",
+            Crying: "😭",
+            Manic: "🤪"
         };
 
         this.frogQuotes = [
@@ -92,7 +120,7 @@ class ProgressPond {
                 this.addLog("moodLog", {
                     type: "mood",
                     val: mood,
-                    icon: this.moodEmojis[mood],
+                    icon: this.moodEmojis[mood] || "😊",
                     fullDate: this.currentFullDate(this.getSelectedTime())
                 });
             });
@@ -108,6 +136,42 @@ class ProgressPond {
         }
     }
 
+    setupTabs() {
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tabName = btn.getAttribute("data-tab");
+                this.switchTab(tabName);
+            });
+        });
+    }
+
+    setupCollapsibles() {
+        document.querySelectorAll(".pond-card.collapsible h2").forEach(h2 => {
+            h2.addEventListener("click", () => {
+                h2.parentElement.classList.toggle("collapsed");
+            });
+        });
+    }
+
+    switchTab(tabName) {
+        document.querySelectorAll(".tab-content").forEach(tab => {
+            tab.classList.remove("active");
+        });
+
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.classList.remove("active");
+        });
+
+        document.getElementById(tabName)?.classList.add("active");
+        document.querySelector(`[data-tab="${tabName}"]`)?.classList.add("active");
+
+        if (tabName === "insights") {
+            setTimeout(() => {
+                this.renderChart("insightChart", "insightAnalyticsPanel", "insightHealthInsights");
+            }, 150);
+        }
+    }
+
     addButtonListener(id, callback) {
         const el = document.getElementById(id);
         if (el) el.addEventListener("click", callback);
@@ -116,7 +180,9 @@ class ProgressPond {
     loadStorage() {
         try {
             const saved = localStorage.getItem(this.storageKey);
-            if (saved) Object.assign(this.data, JSON.parse(saved));
+            if (saved) {
+                Object.assign(this.data, JSON.parse(saved));
+            }
         } catch (error) {
             console.error("Storage load error:", error);
         }
@@ -135,7 +201,7 @@ class ProgressPond {
 
         this.data[logArray].push({
             ...payload,
-            id: Date.now()
+            id: Date.now() + Math.floor(Math.random() * 1000)
         });
 
         this.saveStorage();
@@ -149,7 +215,7 @@ class ProgressPond {
         if (!input || !input.value.trim()) return;
 
         this.data.daily.push({
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             text: input.value.trim(),
             priority: priority?.value || "Medium",
             completed: false,
@@ -164,16 +230,23 @@ class ProgressPond {
 
     toggleHop(id) {
         const hop = this.data.daily.find(h => h.id === id);
+        if (!hop) return;
 
-        if (hop) {
-            hop.completed = !hop.completed;
-            this.saveStorage();
-            this.renderAll();
-        }
+        hop.completed = !hop.completed;
+        this.saveStorage();
+        this.renderAll();
     }
 
     deleteHop(id) {
         this.data.daily = this.data.daily.filter(h => h.id !== id);
+        this.saveStorage();
+        this.renderAll();
+    }
+
+    deleteLog(logArray, id) {
+        if (!this.data[logArray]) return;
+
+        this.data[logArray] = this.data[logArray].filter(item => item.id !== id);
         this.saveStorage();
         this.renderAll();
     }
@@ -186,7 +259,7 @@ class ProgressPond {
 
         this.addLog("sugarLog", {
             type: "sugar",
-            val: val,
+            val,
             icon: "🩸",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -202,7 +275,7 @@ class ProgressPond {
 
         this.addLog("carbLog", {
             type: "carbs",
-            val: val,
+            val,
             icon: "🥣",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -218,7 +291,7 @@ class ProgressPond {
 
         this.addLog("insulinLog", {
             type: "insulin",
-            val: val,
+            val,
             icon: "💉",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -234,8 +307,8 @@ class ProgressPond {
 
         this.addLog("sleepLog", {
             type: "sleep",
-            hours: hours,
-            quality: quality,
+            hours,
+            quality,
             icon: "😴",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -281,9 +354,9 @@ class ProgressPond {
         this.addLog("exerciseLog", {
             type: "exercise",
             exerciseType: type,
-            minutes: minutes,
+            minutes,
             duration: minutes,
-            intensity: intensity,
+            intensity,
             icon: "🏃",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -293,10 +366,8 @@ class ProgressPond {
 
     toggleWater(btn, index) {
         if (btn.classList.contains("active")) {
-            btn.classList.remove("active");
-            this.data.waterCount = Math.max(0, this.data.waterCount - 1);
+            this.data.waterCount = index;
         } else {
-            btn.classList.add("active");
             this.data.waterCount = index + 1;
         }
 
@@ -306,6 +377,16 @@ class ProgressPond {
             icon: "💧",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
+    }
+
+    clearWater() {
+        if (!confirm("Clear water intake?")) return;
+
+        this.data.waterCount = 0;
+        document.querySelectorAll(".drop-btn").forEach(btn => btn.classList.remove("active"));
+
+        this.saveStorage();
+        this.renderAll();
     }
 
     renderAll() {
@@ -329,7 +410,9 @@ class ProgressPond {
         }
 
         const waterCountEl = document.getElementById("waterCountText");
-        if (waterCountEl) waterCountEl.textContent = `${this.data.waterCount} / 8`;
+        if (waterCountEl) {
+            waterCountEl.textContent = `${this.data.waterCount} / 8`;
+        }
 
         document.querySelectorAll(".drop-btn").forEach((btn, index) => {
             if (index < this.data.waterCount) {
@@ -358,9 +441,13 @@ class ProgressPond {
         }
 
         list.innerHTML = todayTasks.map(task => `
-            <li class="task-item ${task.completed ? 'completed' : ''}">
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
-                    onchange="pond.toggleHop(${task.id})">
+            <li class="task-item ${task.completed ? "completed" : ""}">
+                <input 
+                    type="checkbox" 
+                    class="task-checkbox" 
+                    ${task.completed ? "checked" : ""}
+                    onchange="pond.toggleHop(${task.id})"
+                >
                 <span class="task-text">${this.escapeHtml(task.text)}</span>
                 <span class="priority-badge priority-${task.priority.toLowerCase()}">${task.priority}</span>
                 <button class="btn-delete" onclick="pond.deleteHop(${task.id})">×</button>
@@ -396,8 +483,8 @@ class ProgressPond {
         let glucoseAvg = "—";
 
         if (todayGlucose.length > 0) {
-            const glucoseSum = todayGlucose.reduce((sum, s) => sum + s.val, 0);
-            glucoseAvg = (glucoseSum / todayGlucose.length).toFixed(0) + " mg/dL";
+            const glucoseSum = todayGlucose.reduce((sum, s) => sum + Number(s.val || 0), 0);
+            glucoseAvg = Math.round(glucoseSum / todayGlucose.length) + " mg/dL";
         }
 
         const moodEl = document.getElementById("todayMoodAvg");
@@ -413,10 +500,13 @@ class ProgressPond {
         if (dailyHistory) {
             const completed = this.data.daily.filter(t => t.completed);
 
-            dailyHistory.innerHTML = completed.slice(-10).map(t => `
+            dailyHistory.innerHTML = completed.slice(-20).reverse().map(t => `
                 <div class="history-item">
-                    <strong>${this.escapeHtml(t.text)}</strong>
-                    <small>${new Date(t.createdAt).toLocaleDateString()}</small>
+                    <span>
+                        <strong>${this.escapeHtml(t.text)}</strong>
+                        <small>${t.createdAt ? new Date(t.createdAt).toLocaleDateString() : ""}</small>
+                    </span>
+                    <button class="btn-delete" onclick="pond.deleteHop(${t.id})">×</button>
                 </div>
             `).join("") || "<div>No completed tasks yet</div>";
         }
@@ -425,32 +515,87 @@ class ProgressPond {
 
         if (trackerHistory) {
             const allLogs = [
-                ...this.data.moodLog.map(m => `${m.icon} Mood: ${m.val} @ ${m.fullDate || 'N/A'}`),
-                ...this.data.sugarLog.map(s => `🩸 Glucose: ${s.val}mg/dL @ ${s.fullDate || 'N/A'}`),
-                ...this.data.sleepLog.map(s => `😴 Sleep: ${s.hours}h (${s.quality}) @ ${s.fullDate || 'N/A'}`),
-                ...this.data.exerciseLog.map(e => `🏃 Exercise: ${e.minutes}min ${e.exerciseType} @ ${e.fullDate || 'N/A'}`),
-                ...this.data.waterLog.map(w => `💧 Water: ${w.val}/8 @ ${w.fullDate || 'N/A'}`),
-                ...this.data.carbLog.map(c => `🥣 Carbs: ${c.val}g @ ${c.fullDate || 'N/A'}`),
-                ...this.data.insulinLog.map(i => `💉 Insulin: ${i.val}u @ ${i.fullDate || 'N/A'}`),
-                ...this.data.stressLog.map(s => `😰 Stress: ${s.val} @ ${s.fullDate || 'N/A'}`),
-                ...this.data.energyLog.map(e => `⚡ Energy: ${e.val} @ ${e.fullDate || 'N/A'}`)
-            ];
+                ...this.data.moodLog.map(m => ({
+                    text: `${m.icon || "😊"} Mood: ${m.val} @ ${m.fullDate || "N/A"}`,
+                    id: m.id,
+                    logArray: "moodLog",
+                    sort: this.dateTimeToNumber(m.fullDate)
+                })),
+                ...this.data.sugarLog.map(s => ({
+                    text: `🩸 Glucose: ${s.val}mg/dL @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "sugarLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.sleepLog.map(s => ({
+                    text: `😴 Sleep: ${s.hours}h (${s.quality}) @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "sleepLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.exerciseLog.map(e => ({
+                    text: `🏃 Exercise: ${e.minutes || e.duration || 0}min ${e.exerciseType || ""} @ ${e.fullDate || "N/A"}`,
+                    id: e.id,
+                    logArray: "exerciseLog",
+                    sort: this.dateTimeToNumber(e.fullDate)
+                })),
+                ...this.data.waterLog.map(w => ({
+                    text: `💧 Water: ${w.val}/8 @ ${w.fullDate || "N/A"}`,
+                    id: w.id,
+                    logArray: "waterLog",
+                    sort: this.dateTimeToNumber(w.fullDate)
+                })),
+                ...this.data.carbLog.map(c => ({
+                    text: `🥣 Carbs: ${c.val}g @ ${c.fullDate || "N/A"}`,
+                    id: c.id,
+                    logArray: "carbLog",
+                    sort: this.dateTimeToNumber(c.fullDate)
+                })),
+                ...this.data.insulinLog.map(i => ({
+                    text: `💉 Insulin: ${i.val}u @ ${i.fullDate || "N/A"}`,
+                    id: i.id,
+                    logArray: "insulinLog",
+                    sort: this.dateTimeToNumber(i.fullDate)
+                })),
+                ...this.data.stressLog.map(s => ({
+                    text: `😰 Stress: ${s.val} @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "stressLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.energyLog.map(e => ({
+                    text: `⚡ Energy: ${e.val} @ ${e.fullDate || "N/A"}`,
+                    id: e.id,
+                    logArray: "energyLog",
+                    sort: this.dateTimeToNumber(e.fullDate)
+                }))
+            ].sort((a, b) => b.sort - a.sort);
 
-            trackerHistory.innerHTML = allLogs.slice(-15).map(log => `
-                <div class="history-item">${log}</div>
+            trackerHistory.innerHTML = allLogs.slice(0, 30).map(log => `
+                <div class="history-item">
+                    <span>${this.escapeHtml(log.text)}</span>
+                    <button class="btn-delete" onclick="pond.deleteLog('${log.logArray}', ${log.id})">×</button>
+                </div>
             `).join("") || "<div>No tracker logs yet</div>";
         }
 
         const symptomHistory = document.getElementById("achievementSymptomHistoryList");
 
         if (symptomHistory) {
-            symptomHistory.innerHTML = this.data.symptomLog.slice(-10).map(s => `
-                <div class="history-item">${s.icon} ${s.val} @ ${s.fullDate || 'N/A'}</div>
+            const symptoms = [...this.data.symptomLog].sort((a, b) => {
+                return this.dateTimeToNumber(b.fullDate) - this.dateTimeToNumber(a.fullDate);
+            });
+
+            symptomHistory.innerHTML = symptoms.slice(0, 20).map(s => `
+                <div class="history-item">
+                    <span>${s.icon || "🩺"} ${this.escapeHtml(s.val)} @ ${s.fullDate || "N/A"}</span>
+                    <button class="btn-delete" onclick="pond.deleteLog('symptomLog', ${s.id})">×</button>
+                </div>
             `).join("") || "<div>No symptoms logged</div>";
         }
     }
 
-    renderChart(canvasId = 'insightChart', panelId = 'insightAnalyticsPanel', insightId = 'insightHealthInsights') {
+    renderChart(canvasId = "insightChart", panelId = "insightAnalyticsPanel", insightId = "insightHealthInsights") {
         const canvas = document.getElementById(canvasId);
         if (!canvas || typeof Chart === "undefined") return;
 
@@ -474,8 +619,8 @@ class ProgressPond {
         const labels = [];
 
         allEntries.forEach(entry => {
-            const t = this.getTime(entry.fullDate);
-            if (t && !labels.includes(t)) labels.push(t);
+            const label = this.getChartLabel(entry.fullDate);
+            if (label && !labels.includes(label)) labels.push(label);
         });
 
         const datasets = [];
@@ -483,7 +628,10 @@ class ProgressPond {
         if (sortedSugar.length > 0) {
             datasets.push({
                 label: "Glucose",
-                data: sortedSugar.map(s => ({ x: this.getTime(s.fullDate), y: s.val })),
+                data: sortedSugar.map(s => ({
+                    x: this.getChartLabel(s.fullDate),
+                    y: Number(s.val)
+                })),
                 borderColor: "#ef4444",
                 backgroundColor: "#ef4444",
                 tension: 0.3,
@@ -495,7 +643,7 @@ class ProgressPond {
             datasets.push({
                 label: "Mood",
                 data: sortedMood.map(m => ({
-                    x: this.getTime(m.fullDate),
+                    x: this.getChartLabel(m.fullDate),
                     y: this.moodScores[m.val] || 5
                 })),
                 borderColor: "#f59e0b",
@@ -508,7 +656,10 @@ class ProgressPond {
         if (sortedCarbs.length > 0) {
             datasets.push({
                 label: "Carbs",
-                data: sortedCarbs.map(c => ({ x: this.getTime(c.fullDate), y: c.val })),
+                data: sortedCarbs.map(c => ({
+                    x: this.getChartLabel(c.fullDate),
+                    y: Number(c.val)
+                })),
                 backgroundColor: "#10b981",
                 pointStyle: "rect",
                 showLine: false,
@@ -520,7 +671,10 @@ class ProgressPond {
         if (sortedWater.length > 0) {
             datasets.push({
                 label: "Water",
-                data: sortedWater.map(w => ({ x: this.getTime(w.fullDate), y: w.val })),
+                data: sortedWater.map(w => ({
+                    x: this.getChartLabel(w.fullDate),
+                    y: Number(w.val)
+                })),
                 backgroundColor: "#00d4ff",
                 pointStyle: "triangle",
                 showLine: false,
@@ -532,7 +686,10 @@ class ProgressPond {
         if (sortedInsulin.length > 0) {
             datasets.push({
                 label: "Insulin",
-                data: sortedInsulin.map(i => ({ x: this.getTime(i.fullDate), y: i.val })),
+                data: sortedInsulin.map(i => ({
+                    x: this.getChartLabel(i.fullDate),
+                    y: Number(i.val)
+                })),
                 backgroundColor: "#8b5cf6",
                 pointStyle: "star",
                 showLine: false,
@@ -544,7 +701,10 @@ class ProgressPond {
         if (sortedSleep.length > 0) {
             datasets.push({
                 label: "Sleep Hours",
-                data: sortedSleep.map(sl => ({ x: this.getTime(sl.fullDate), y: sl.hours })),
+                data: sortedSleep.map(sl => ({
+                    x: this.getChartLabel(sl.fullDate),
+                    y: Number(sl.hours)
+                })),
                 borderColor: "#6366f1",
                 backgroundColor: "#6366f1",
                 tension: 0.3,
@@ -555,7 +715,7 @@ class ProgressPond {
             datasets.push({
                 label: "Sleep Quality",
                 data: sortedSleep.map(sl => ({
-                    x: this.getTime(sl.fullDate),
+                    x: this.getChartLabel(sl.fullDate),
                     y: this.sleepQualityScores[sl.quality] || 5
                 })),
                 borderColor: "#a855f7",
@@ -571,7 +731,7 @@ class ProgressPond {
             datasets.push({
                 label: "Stress",
                 data: sortedStress.map(s => ({
-                    x: this.getTime(s.fullDate),
+                    x: this.getChartLabel(s.fullDate),
                     y: this.stressScores[s.val] || s.score || 5
                 })),
                 borderColor: "#ff00aa",
@@ -585,7 +745,7 @@ class ProgressPond {
             datasets.push({
                 label: "Energy",
                 data: sortedEnergy.map(e => ({
-                    x: this.getTime(e.fullDate),
+                    x: this.getChartLabel(e.fullDate),
                     y: this.energyScores[e.val] || e.score || 5
                 })),
                 borderColor: "#00aa77",
@@ -599,8 +759,8 @@ class ProgressPond {
             datasets.push({
                 label: "Exercise Minutes",
                 data: sortedExercise.map(ex => ({
-                    x: this.getTime(ex.fullDate),
-                    y: ex.minutes || ex.duration || 0
+                    x: this.getChartLabel(ex.fullDate),
+                    y: Number(ex.minutes || ex.duration || 0)
                 })),
                 borderColor: "#3b82f6",
                 backgroundColor: "#3b82f6",
@@ -610,12 +770,15 @@ class ProgressPond {
             });
         }
 
-        if (this.insightChart) this.insightChart.destroy();
+        if (this.insightChart) {
+            this.insightChart.destroy();
+        }
 
         this.insightChart = new Chart(ctx, {
             type: "line",
             data: {
-                datasets: datasets
+                labels,
+                datasets
             },
             options: {
                 responsive: true,
@@ -627,7 +790,6 @@ class ProgressPond {
                 scales: {
                     x: {
                         type: "category",
-                        labels: labels,
                         ticks: {
                             color: "#5d4a4a",
                             maxRotation: 45,
@@ -723,28 +885,70 @@ class ProgressPond {
         const insightBox = document.getElementById(insightId);
 
         if (insightBox) {
-            if (allEntries.length === 0) {
-                insightBox.innerHTML = `
-                    <h3>🌸 Gentle Pattern Insights</h3>
-                    <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
-                `;
-            } else {
-                insightBox.innerHTML = `
-                    <h3>🌸 Gentle Pattern Insights</h3>
-                    <ul>
-                        <li>Your chart is now using individual health tracker entries instead of a 7-day trend average.</li>
-                        <li>Entries are plotted by the time you logged them, so past-time entries should appear in the right order.</li>
-                        <li>Glucose and carbs use the left axis; mood, stress, energy, water, insulin, sleep, and exercise use their own scaled axes.</li>
-                    </ul>
-                `;
-            }
+            insightBox.innerHTML = this.buildInsights(allEntries);
         }
+    }
+
+    buildInsights(allEntries) {
+        if (!allEntries.length) {
+            return `
+                <h3>🌸 Gentle Pattern Insights</h3>
+                <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
+            `;
+        }
+
+        const insights = [];
+
+        if (this.data.sugarLog.length > 0) {
+            const glucoseVals = this.data.sugarLog.map(s => Number(s.val)).filter(n => !isNaN(n));
+            const avgGlucose = glucoseVals.reduce((a, b) => a + b, 0) / glucoseVals.length;
+
+            insights.push(`Your average logged glucose is about ${Math.round(avgGlucose)} mg/dL.`);
+        }
+
+        if (this.data.moodLog.length > 0) {
+            const moodVals = this.data.moodLog.map(m => this.moodScores[m.val] || 5);
+            const avgMood = moodVals.reduce((a, b) => a + b, 0) / moodVals.length;
+
+            insights.push(`Your average logged mood score is ${avgMood.toFixed(1)} out of 10.`);
+        }
+
+        if (this.data.sleepLog.length > 0) {
+            const totalSleep = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+            const avgSleep = totalSleep / this.data.sleepLog.length;
+
+            insights.push(`Your average logged sleep is ${avgSleep.toFixed(1)} hours.`);
+        }
+
+        if (this.data.exerciseLog.length > 0) {
+            const totalExercise = this.data.exerciseLog.reduce((sum, e) => {
+                return sum + Number(e.minutes || e.duration || 0);
+            }, 0);
+
+            insights.push(`You have logged ${totalExercise} total exercise minutes.`);
+        }
+
+        insights.push("Your chart is using individual health tracker entries, not a 7-day trend average.");
+
+        return `
+            <h3>🌸 Gentle Pattern Insights</h3>
+            <ul>${insights.map(i => `<li>${this.escapeHtml(i)}</li>`).join("")}</ul>
+        `;
     }
 
     sortByLoggedTime(logs = []) {
         return [...logs].sort((a, b) => {
             return this.dateTimeToNumber(a.fullDate) - this.dateTimeToNumber(b.fullDate);
         });
+    }
+
+    getChartLabel(fullDate) {
+        const date = this.getDateOnly(fullDate);
+        const time = this.getTime(fullDate);
+
+        if (!date && !time) return "";
+
+        return `${date} ${time}`.trim();
     }
 
     getTime(fullDate) {
@@ -754,7 +958,7 @@ class ProgressPond {
             return fullDate.split(" @ ")[1];
         }
 
-        return fullDate;
+        return "";
     }
 
     getDateOnly(fullDate) {
@@ -816,147 +1020,154 @@ class ProgressPond {
         return new Date().toLocaleDateString();
     }
 
-    getLast7Days() {
-        const days = [];
-
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            days.push(date.toLocaleDateString());
-        }
-
-        return days;
-    }
-
     checkDailyReset() {
         const lastDate = localStorage.getItem("lastPondDate");
         const today = this.getTodayDate();
 
         if (lastDate !== today) {
             this.data.daily = this.data.daily.filter(t => t.date === today);
-            localStorage.setItem("lastPondDate", today);
-        }
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    clearWater() {
-        if (confirm("Clear water intake?")) {
             this.data.waterCount = 0;
-            document.querySelectorAll(".drop-btn").forEach(btn => btn.classList.remove("active"));
+            localStorage.setItem("lastPondDate", today);
             this.saveStorage();
-            this.renderBasicUI();
-            this.renderHistory();
         }
     }
 
     clearDayKeepGoals() {
-        if (confirm("Clear today's health logs? (Keeps tasks)")) {
-            const today = this.getTodayDate();
+        if (!confirm("Clear today's health logs? This keeps tasks.")) return;
 
-            this.data.moodLog = this.data.moodLog.filter(m => !m.fullDate?.includes(today));
-            this.data.sugarLog = this.data.sugarLog.filter(s => !s.fullDate?.includes(today));
-            this.data.carbLog = this.data.carbLog.filter(c => !c.fullDate?.includes(today));
-            this.data.waterLog = this.data.waterLog.filter(w => !w.fullDate?.includes(today));
-            this.data.insulinLog = this.data.insulinLog.filter(i => !i.fullDate?.includes(today));
-            this.data.sleepLog = this.data.sleepLog.filter(s => !s.fullDate?.includes(today));
-            this.data.stressLog = this.data.stressLog.filter(s => !s.fullDate?.includes(today));
-            this.data.energyLog = this.data.energyLog.filter(e => !e.fullDate?.includes(today));
-            this.data.symptomLog = this.data.symptomLog.filter(s => !s.fullDate?.includes(today));
-            this.data.exerciseLog = this.data.exerciseLog.filter(e => !e.fullDate?.includes(today));
+        const today = this.getTodayDate();
 
-            this.data.waterCount = 0;
+        const logArrays = [
+            "moodLog",
+            "sugarLog",
+            "carbLog",
+            "waterLog",
+            "insulinLog",
+            "sleepLog",
+            "stressLog",
+            "energyLog",
+            "symptomLog",
+            "exerciseLog"
+        ];
 
-            this.saveStorage();
-            this.renderAll();
+        logArrays.forEach(logArray => {
+            this.data[logArray] = this.data[logArray].filter(item => {
+                return !item.fullDate?.includes(today);
+            });
+        });
+
+        this.data.waterCount = 0;
+
+        this.saveStorage();
+        this.renderAll();
+
+        if (this.insightChart) {
+            this.renderChart("insightChart", "insightAnalyticsPanel", "insightHealthInsights");
         }
     }
 
     resetDayEverything() {
-        if (confirm("⚠️ Reset EVERYTHING? This cannot be undone!")) {
-            if (confirm("Are you ABSOLUTELY sure?")) {
-                this.data = {
-                    daily: [],
-                    history: [],
-                    moodLog: [],
-                    sugarLog: [],
-                    carbLog: [],
-                    waterLog: [],
-                    insulinLog: [],
-                    sleepLog: [],
-                    stressLog: [],
-                    energyLog: [],
-                    symptomLog: [],
-                    exerciseLog: [],
-                    analytics: [],
-                    waterCount: 0,
-                    streak: 0,
-                    lastStreakDate: null,
-                    theme: 'light'
-                };
+        if (!confirm("⚠️ Reset EVERYTHING? This cannot be undone!")) return;
+        if (!confirm("Are you ABSOLUTELY sure?")) return;
 
-                this.saveStorage();
-                this.renderAll();
+        this.data = {
+            daily: [],
+            history: [],
+            moodLog: [],
+            sugarLog: [],
+            carbLog: [],
+            waterLog: [],
+            insulinLog: [],
+            sleepLog: [],
+            stressLog: [],
+            energyLog: [],
+            symptomLog: [],
+            exerciseLog: [],
+            analytics: [],
+            waterCount: 0,
+            streak: 0,
+            lastStreakDate: null,
+            theme: "light"
+        };
 
-                if (this.insightChart) {
-                    this.insightChart.destroy();
-                    this.insightChart = null;
-                }
-            }
+        this.saveStorage();
+        this.renderAll();
+
+        if (this.insightChart) {
+            this.insightChart.destroy();
+            this.insightChart = null;
         }
     }
 
     async exportToExcelWithChart() {
+        const btn = document.getElementById("tabExportExcelBtn");
+
         try {
-            this.renderChart('insightChart', 'insightAnalyticsPanel', 'insightHealthInsights');
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const workbook = new ExcelJS.Workbook();
-
-            const summarySheet = workbook.addWorksheet("Summary");
-            summarySheet.pageSetup.paperSize = ExcelJS.PageSize.A4;
-            summarySheet.pageSetup.orientation = 'landscape';
-
-            const chartCanvas = document.getElementById("insightChart");
-
-            if (chartCanvas && chartCanvas.parentElement.offsetHeight > 0) {
-                try {
-                    const chartImage = await html2canvas(chartCanvas, {
-                        allowTaint: true,
-                        useCORS: true,
-                        scale: 2
-                    });
-
-                    const chartImageData = chartImage.toDataURL('image/png');
-
-                    const imageId = workbook.addImage({
-                        base64: chartImageData,
-                        extension: 'png'
-                    });
-
-                    summarySheet.addImage(imageId, 'A1:H15');
-                } catch (e) {
-                    console.log("Chart export skipped:", e);
-                }
+            if (!window.ExcelJS) {
+                alert("❌ ExcelJS did not load. Check your CDN links in the HTML.");
+                return;
             }
 
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "Exporting...";
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = "Progress Pond";
+            workbook.created = new Date();
+
+            const summarySheet = workbook.addWorksheet("Summary");
+            const dataSheet = workbook.addWorksheet("Detailed Data");
+
+            summarySheet.columns = [
+                { width: 28 },
+                { width: 22 },
+                { width: 22 },
+                { width: 22 }
+            ];
+
+            summarySheet.addRow(["🐸 Progress Pond Export"]);
+            summarySheet.getCell("A1").font = { bold: true, size: 18 };
+
+            summarySheet.addRow(["Exported", new Date().toLocaleString()]);
             summarySheet.addRow([]);
-            summarySheet.addRow(["Completed Goals 🌿"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
 
             const completedGoals = this.data.daily.filter(t => t.completed);
 
-            if (completedGoals.length > 0) {
+            const avg = arr => {
+                const clean = arr.map(Number).filter(n => !isNaN(n));
+                if (!clean.length) return null;
+                return clean.reduce((a, b) => a + b, 0) / clean.length;
+            };
+
+            const glucoseAvg = avg(this.data.sugarLog.map(s => s.val));
+            const moodAvg = avg(this.data.moodLog.map(m => this.moodScores[m.val] || 5));
+            const sleepTotal = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+            const exerciseTotal = this.data.exerciseLog.reduce((sum, e) => {
+                return sum + Number(e.minutes || e.duration || 0);
+            }, 0);
+
+            summarySheet.addRow(["Completed Goals", completedGoals.length]);
+            summarySheet.addRow(["Mood Logs", this.data.moodLog.length]);
+            summarySheet.addRow(["Average Mood", moodAvg ? moodAvg.toFixed(1) : "—"]);
+            summarySheet.addRow(["Glucose Logs", this.data.sugarLog.length]);
+            summarySheet.addRow(["Average Glucose", glucoseAvg ? `${Math.round(glucoseAvg)} mg/dL` : "—"]);
+            summarySheet.addRow(["Total Sleep", `${sleepTotal.toFixed(2)} hours`]);
+            summarySheet.addRow(["Total Exercise", `${exerciseTotal} minutes`]);
+            summarySheet.addRow(["Symptoms Logged", this.data.symptomLog.length]);
+            summarySheet.addRow([]);
+
+            summarySheet.addRow(["Completed Goals 🌿"]);
+            summarySheet.lastRow.font = { bold: true };
+
+            if (completedGoals.length) {
                 completedGoals.forEach(goal => {
-                    summarySheet.addRow([goal.text, goal.priority]);
+                    summarySheet.addRow([
+                        goal.text,
+                        goal.priority,
+                        goal.createdAt ? new Date(goal.createdAt).toLocaleString() : ""
+                    ]);
                 });
             } else {
                 summarySheet.addRow(["No completed goals"]);
@@ -964,93 +1175,63 @@ class ProgressPond {
 
             summarySheet.addRow([]);
             summarySheet.addRow(["Symptoms 🩺"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
+            summarySheet.lastRow.font = { bold: true };
 
-            if (this.data.symptomLog.length > 0) {
+            if (this.data.symptomLog.length) {
                 this.data.symptomLog.forEach(symptom => {
-                    summarySheet.addRow([symptom.val, symptom.fullDate]);
+                    summarySheet.addRow([symptom.val, symptom.fullDate || ""]);
                 });
             } else {
                 summarySheet.addRow(["No symptoms logged"]);
             }
 
-            summarySheet.addRow([]);
-            summarySheet.addRow(["Sleep & Exercise 😴🏃"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
-
-            const sleepSum = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
-            const exerciseSum = this.data.exerciseLog.reduce((sum, e) => sum + Number(e.minutes || 0), 0);
-
-            summarySheet.addRow(["Total Sleep Hours", sleepSum.toFixed(2)]);
-            summarySheet.addRow(["Total Exercise Minutes", exerciseSum]);
-
-            const dataSheet = workbook.addWorksheet("Detailed Data");
-
             dataSheet.columns = [
-                { header: "Date", key: "date", width: 15 },
-                { header: "Time", key: "time", width: 10 },
-                { header: "Type", key: "type", width: 12 },
-                { header: "Value", key: "value", width: 15 },
-                { header: "Details", key: "details", width: 25 }
+                { header: "Date", key: "date", width: 16 },
+                { header: "Time", key: "time", width: 12 },
+                { header: "Type", key: "type", width: 18 },
+                { header: "Value", key: "value", width: 18 },
+                { header: "Details", key: "details", width: 28 }
             ];
+
+            const splitDateTime = fullDate => {
+                const parts = String(fullDate || "").split(" @ ");
+                return {
+                    date: parts[0] || "",
+                    time: parts[1] || ""
+                };
+            };
 
             const rows = [];
 
-            this.data.moodLog.forEach(m => {
-                const [date, time] = (m.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Mood", value: m.val, details: m.icon });
-            });
+            const pushRow = (fullDate, type, value, details = "") => {
+                const dt = splitDateTime(fullDate);
 
-            this.data.sugarLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Glucose", value: s.val + "mg/dL", details: "" });
-            });
+                rows.push({
+                    date: dt.date,
+                    time: dt.time,
+                    type,
+                    value,
+                    details
+                });
+            };
 
-            this.data.carbLog.forEach(c => {
-                const [date, time] = (c.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Carbs", value: c.val + "g", details: "" });
-            });
-
-            this.data.insulinLog.forEach(i => {
-                const [date, time] = (i.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Insulin", value: i.val + "u", details: "" });
-            });
-
-            this.data.waterLog.forEach(w => {
-                const [date, time] = (w.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Water", value: w.val + "/8", details: "" });
-            });
-
-            this.data.sleepLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Sleep", value: s.hours + "h", details: s.quality });
-            });
-
-            this.data.stressLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Stress", value: s.val, details: s.score || "" });
-            });
-
-            this.data.energyLog.forEach(e => {
-                const [date, time] = (e.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Energy", value: e.val, details: e.score || "" });
-            });
+            this.data.moodLog.forEach(m => pushRow(m.fullDate, "Mood", m.val, m.icon || ""));
+            this.data.sugarLog.forEach(s => pushRow(s.fullDate, "Glucose", s.val, "mg/dL"));
+            this.data.carbLog.forEach(c => pushRow(c.fullDate, "Carbs", c.val, "grams"));
+            this.data.insulinLog.forEach(i => pushRow(i.fullDate, "Insulin", i.val, "units"));
+            this.data.waterLog.forEach(w => pushRow(w.fullDate, "Water", w.val, "out of 8"));
+            this.data.sleepLog.forEach(s => pushRow(s.fullDate, "Sleep", s.hours, s.quality || ""));
+            this.data.stressLog.forEach(s => pushRow(s.fullDate, "Stress", s.val, s.score || ""));
+            this.data.energyLog.forEach(e => pushRow(e.fullDate, "Energy", e.val, e.score || ""));
+            this.data.symptomLog.forEach(s => pushRow(s.fullDate, "Symptom", s.val, s.icon || ""));
 
             this.data.exerciseLog.forEach(e => {
-                const [date, time] = (e.fullDate || "").split(" @ ");
-                rows.push({
-                    date,
-                    time,
-                    type: "Exercise",
-                    value: e.minutes + "m",
-                    details: e.exerciseType + " (" + e.intensity + ")"
-                });
+                pushRow(
+                    e.fullDate,
+                    "Exercise",
+                    e.minutes || e.duration || "",
+                    `${e.exerciseType || ""} ${e.intensity ? `(${e.intensity})` : ""}`.trim()
+                );
             });
 
             rows
@@ -1061,25 +1242,51 @@ class ProgressPond {
                 })
                 .forEach(row => dataSheet.addRow(row));
 
+            dataSheet.getRow(1).font = { bold: true };
+
+            [summarySheet, dataSheet].forEach(sheet => {
+                sheet.eachRow(row => {
+                    row.eachCell(cell => {
+                        cell.alignment = {
+                            vertical: "middle",
+                            wrapText: true
+                        };
+                    });
+                });
+            });
+
             const buffer = await workbook.xlsx.writeBuffer();
 
             const blob = new Blob([buffer], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             });
 
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
+            const safeDate = new Date().toISOString().slice(0, 10);
 
-            link.href = url;
-            link.download = `Progress-Pond-${this.getTodayDate()}.xlsx`;
-            link.click();
+            if (window.saveAs) {
+                saveAs(blob, `Progress-Pond-${safeDate}.xlsx`);
+            } else {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
 
-            window.URL.revokeObjectURL(url);
+                link.href = url;
+                link.download = `Progress-Pond-${safeDate}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+            }
 
             alert("✅ Export successful!");
         } catch (error) {
             console.error("Export error:", error);
-            alert("❌ Export failed. Please try again.");
+            alert("❌ Export failed. Check the console for details.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "📊 Export to Excel";
+            }
         }
     }
 
@@ -1097,9 +1304,15 @@ class ProgressPond {
     }
 
     toggleTheme() {
-        this.data.theme = this.data.theme === 'light' ? 'dark' : 'light';
-        document.body.classList.toggle('dark-mode');
+        this.data.theme = this.data.theme === "light" ? "dark" : "light";
+        document.body.classList.toggle("dark-mode");
         this.saveStorage();
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = String(text ?? "");
+        return div.innerHTML;
     }
 }
 
@@ -1107,4 +1320,10 @@ let pond;
 
 document.addEventListener("DOMContentLoaded", () => {
     pond = new ProgressPond();
+
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js").catch(error => {
+            console.warn("Service worker not registered:", error);
+        });
+    }
 });
