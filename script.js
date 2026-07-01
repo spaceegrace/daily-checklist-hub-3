@@ -912,18 +912,19 @@ class ProgressPond {
 
     async exportToExcelWithChart() {
         try {
+            // First render the chart to ensure it's up to date
             this.renderChart('insightChart', 'insightAnalyticsPanel', 'insightHealthInsights');
-
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const workbook = new ExcelJS.Workbook();
-
             const summarySheet = workbook.addWorksheet("Summary");
             summarySheet.pageSetup.paperSize = ExcelJS.PageSize.A4;
             summarySheet.pageSetup.orientation = 'landscape';
 
-            const chartCanvas = document.getElementById("insightChart");
+            let currentRow = 1;
 
+            // ===== CHART AT TOP =====
+            const chartCanvas = document.getElementById("insightChart");
             if (chartCanvas && chartCanvas.parentElement.offsetHeight > 0) {
                 try {
                     const chartImage = await html2canvas(chartCanvas, {
@@ -933,63 +934,128 @@ class ProgressPond {
                     });
 
                     const chartImageData = chartImage.toDataURL('image/png');
-
                     const imageId = workbook.addImage({
                         base64: chartImageData,
                         extension: 'png'
                     });
 
-                    summarySheet.addImage(imageId, 'A1:H15');
+                    summarySheet.addImage(imageId, `A${currentRow}:H20`);
+                    currentRow = 22;
                 } catch (e) {
                     console.log("Chart export skipped:", e);
+                    currentRow = 2;
                 }
+            } else {
+                currentRow = 2;
             }
 
+            // Add spacing
             summarySheet.addRow([]);
-            summarySheet.addRow(["Completed Goals 🌿"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
+            currentRow++;
 
+            // ===== GOALS AND SYMPTOMS SIDE BY SIDE =====
             const completedGoals = this.data.daily.filter(t => t.completed);
+            const symptoms = this.data.symptomLog;
 
-            if (completedGoals.length > 0) {
-                completedGoals.forEach(goal => {
-                    summarySheet.addRow([goal.text, goal.priority]);
-                });
-            } else {
-                summarySheet.addRow(["No completed goals"]);
+            // Headers
+            summarySheet.addRow(["Completed Goals 🌿", "", "", "", "Symptoms 🩺"]);
+            const headerRow = summarySheet.getRow(currentRow);
+            headerRow.getCell(1).font = { bold: true, size: 12 };
+            headerRow.getCell(5).font = { bold: true, size: 12 };
+            currentRow++;
+
+            // Get max length
+            const maxLength = Math.max(
+                completedGoals.length > 0 ? completedGoals.length : 1,
+                symptoms.length > 0 ? symptoms.length : 1
+            );
+
+            // Add goals and symptoms in parallel columns
+            for (let i = 0; i < maxLength; i++) {
+                let goalText = "";
+                let goalPriority = "";
+                let symptomText = "";
+                let symptomTime = "";
+
+                if (i < completedGoals.length) {
+                    goalText = completedGoals[i].text;
+                    goalPriority = completedGoals[i].priority;
+                } else if (i === 0 && completedGoals.length === 0) {
+                    goalText = "No completed goals";
+                }
+
+                if (i < symptoms.length) {
+                    symptomText = symptoms[i].val;
+                    symptomTime = symptoms[i].fullDate || "";
+                }
+
+                summarySheet.addRow([goalText, goalPriority, "", "", symptomText, symptomTime]);
+                currentRow++;
             }
 
+            // Add spacing
             summarySheet.addRow([]);
-            summarySheet.addRow(["Symptoms 🩺"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
+            currentRow++;
 
-            if (this.data.symptomLog.length > 0) {
-                this.data.symptomLog.forEach(symptom => {
-                    summarySheet.addRow([symptom.val, symptom.fullDate]);
-                });
-            } else {
-                summarySheet.addRow(["No symptoms logged"]);
-            }
-
-            summarySheet.addRow([]);
+            // ===== SLEEP & EXERCISE =====
             summarySheet.addRow(["Sleep & Exercise 😴🏃"]);
-            summarySheet.getCell(summarySheet.rowCount, 1).font = {
-                bold: true,
-                size: 12
-            };
+            summarySheet.getCell(currentRow, 1).font = { bold: true, size: 12 };
+            currentRow++;
 
             const sleepSum = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
             const exerciseSum = this.data.exerciseLog.reduce((sum, e) => sum + Number(e.minutes || 0), 0);
 
-            summarySheet.addRow(["Total Sleep Hours", sleepSum.toFixed(2)]);
-            summarySheet.addRow(["Total Exercise Minutes", exerciseSum]);
+            // Sleep details
+            if (this.data.sleepLog.length > 0) {
+                summarySheet.addRow(["Total Sleep Hours", sleepSum.toFixed(2)]);
+                currentRow++;
 
+                summarySheet.addRow(["Sleep Log Details"]);
+                summarySheet.getCell(currentRow, 1).font = { bold: true };
+                currentRow++;
+
+                this.data.sleepLog.forEach(sleep => {
+                    summarySheet.addRow([
+                        `${sleep.hours}h (${sleep.quality})`,
+                        sleep.fullDate || ""
+                    ]);
+                    currentRow++;
+                });
+            } else {
+                summarySheet.addRow(["Total Sleep Hours", "0"]);
+                currentRow++;
+                summarySheet.addRow(["No sleep logged"]);
+                currentRow++;
+            }
+
+            summarySheet.addRow([]);
+            currentRow++;
+
+            // Exercise details
+            if (this.data.exerciseLog.length > 0) {
+                summarySheet.addRow(["Total Exercise Minutes", exerciseSum]);
+                currentRow++;
+
+                summarySheet.addRow(["Exercise Log Details"]);
+                summarySheet.getCell(currentRow, 1).font = { bold: true };
+                currentRow++;
+
+                this.data.exerciseLog.forEach(exercise => {
+                    summarySheet.addRow([
+                        `${exercise.exerciseType} (${exercise.intensity})`,
+                        `${exercise.minutes} min`,
+                        exercise.fullDate || ""
+                    ]);
+                    currentRow++;
+                });
+            } else {
+                summarySheet.addRow(["Total Exercise Minutes", "0"]);
+                currentRow++;
+                summarySheet.addRow(["No exercise logged"]);
+                currentRow++;
+            }
+
+            // ===== DETAILED DATA SHEET =====
             const dataSheet = workbook.addWorksheet("Detailed Data");
 
             dataSheet.columns = [
@@ -1062,20 +1128,17 @@ class ProgressPond {
                 .forEach(row => dataSheet.addRow(row));
 
             const buffer = await workbook.xlsx.writeBuffer();
-
             const blob = new Blob([buffer], {
                 type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             });
 
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-
             link.href = url;
             link.download = `Progress-Pond-${this.getTodayDate()}.xlsx`;
             link.click();
 
             window.URL.revokeObjectURL(url);
-
             alert("✅ Export successful!");
         } catch (error) {
             console.error("Export error:", error);
