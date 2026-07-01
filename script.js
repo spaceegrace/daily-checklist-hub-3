@@ -1,9 +1,12 @@
 // =========================================================
-// PROGRESS POND V26+ - MODULAR & ENHANCED WITH TABS
+// PROGRESS POND V26+ - FULL UPDATED SCRIPT
 // =========================================================
 
 class ProgressPond {
     constructor() {
+        this.storageKey = "ProgressPond_V26";
+        this.insightChart = null;
+
         this.data = {
             daily: [],
             history: [],
@@ -21,90 +24,142 @@ class ProgressPond {
             waterCount: 0,
             streak: 0,
             lastStreakDate: null,
-            theme: 'light'
+            theme: "light"
         };
 
-        this.insightChart = null;
-        this.storageKey = "ProgressPond_V26";
         this.init();
     }
 
     init() {
         this.loadStorage();
         this.setupMoodData();
+        this.checkDailyReset();
         this.setupEventListeners();
+        this.setupTabs();
+        this.setupCollapsibles();
         this.renderAll();
         this.setMotivation();
         this.resetTimePicker();
-        this.checkDailyReset();
     }
 
     setupMoodData() {
         this.moodScores = {
-            Manic: 10, Happy: 9, Focused: 8, Calm: 7, Tired: 6,
-            Confused: 5, Grumpy: 4, Angry: 3, Sad: 2, Crying: 1
+            Manic: 10,
+            Happy: 9,
+            Focused: 8,
+            Calm: 7,
+            Tired: 6,
+            Confused: 5,
+            Grumpy: 4,
+            Angry: 3,
+            Sad: 2,
+            Crying: 1
         };
 
         this.energyScores = {
-            Exhausted: 1, Low: 3, Okay: 5, Good: 7, Energetic: 10
+            Exhausted: 1,
+            Low: 3,
+            Okay: 5,
+            Good: 7,
+            Energetic: 10
         };
 
         this.stressScores = {
-            Calm: 1, Mild: 3, Moderate: 5, High: 7, Extreme: 10
+            Calm: 1,
+            Mild: 3,
+            Moderate: 5,
+            High: 7,
+            Extreme: 10
         };
 
         this.sleepQualityScores = {
-            Bad: 3, Good: 7, Great: 10
+            Bad: 3,
+            Good: 7,
+            Great: 10
         };
 
         this.moodEmojis = {
-            Happy: "😊", Calm: "😌", Focused: "🧐", Tired: "😴",
-            Grumpy: "😠", Confused: "😕", Angry: "😡", Sad: "😢",
-            Crying: "😭", Manic: "🤪"
+            Happy: "😊",
+            Calm: "😌",
+            Focused: "🧐",
+            Tired: "😴",
+            Grumpy: "😠",
+            Confused: "😕",
+            Angry: "😡",
+            Sad: "😢",
+            Crying: "😭",
+            Manic: "🤪"
         };
 
         this.frogQuotes = [
-            "🐸 💖 Ribbit! You're doing amazing! 💞 🐸",
-            "✨ 🐸 Take a deep breath, little froggy! 💗 ✨",
-            "🌸 🐸 Every hop counts! I'm proud of you! 💖 🌸",
-            "💕 🐸 You've got this! Keep hopping! 💪 🐸",
-            "🌿 🐸 Progress, not perfection! 🌿 💚"
+            "🐸 Ribbit! You're doing great today!",
+            "🐸 One hop at a time, friend.",
+            "🐸 Your efforts matter, even the small ones.",
+            "🐸 Progress, not perfection.",
+            "🐸 You've got this! 💚",
+            "🐸 Be gentle with yourself.",
+            "🐸 Every day is a fresh lily pad.",
+            "🐸 You're stronger than you think.",
+            "🐸 Rest is productive too.",
+            "🐸 Celebrate the small wins!"
         ];
     }
 
+    setMotivation() {
+        const motivationEl = document.getElementById("motivationFrog");
+        if (motivationEl) {
+            const quote = this.frogQuotes[Math.floor(Math.random() * this.frogQuotes.length)];
+            motivationEl.textContent = quote;
+        }
+    }
+
     setupEventListeners() {
-        this.addButtonListener("addDailyBtn", () => this.addHop());
-        this.addButtonListener("addSugarBtn", () => this.addSugar());
-        this.addButtonListener("addCarbBtn", () => this.addCarb());
-        this.addButtonListener("addInsulinBtn", () => this.addInsulin());
-        this.addButtonListener("clearWaterBtn", () => this.clearWater());
-        this.addButtonListener("resetTimeBtn", () => this.resetTimePicker());
-
-        this.addButtonListener("tabExportExcelBtn", () => this.exportToExcelWithChart());
-        this.addButtonListener("tabClearDayBtn", () => this.clearDayKeepGoals());
-        this.addButtonListener("tabClearHistoryBtn", () => this.resetDayEverything());
-        this.addButtonListener("bannerClose", () => this.closeBanner());
-
-        document.querySelectorAll(".mood-btn").forEach(btn => {
+        document.querySelectorAll("[data-mood]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const mood = btn.getAttribute("data-mood");
-
                 this.addLog("moodLog", {
                     type: "mood",
                     val: mood,
-                    icon: this.moodEmojis[mood],
+                    icon: this.moodEmojis[mood] || "😊",
                     fullDate: this.currentFullDate(this.getSelectedTime())
                 });
             });
         });
+    }
 
-        document.querySelectorAll(".drop-btn").forEach((btn, index) => {
-            btn.addEventListener("click", () => this.toggleWater(btn, index));
+    setupTabs() {
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tabName = btn.getAttribute("data-tab");
+                this.switchTab(tabName);
+            });
+        });
+    }
+
+    setupCollapsibles() {
+        document.querySelectorAll(".pond-card.collapsible h2").forEach(h2 => {
+            h2.addEventListener("click", () => {
+                h2.parentElement.classList.toggle("collapsed");
+            });
+        });
+    }
+
+    switchTab(tabName) {
+        document.querySelectorAll(".tab-content").forEach(tab => {
+            tab.classList.remove("active");
         });
 
-        const themeToggle = document.getElementById("themeToggle");
-        if (themeToggle) {
-            themeToggle.addEventListener("click", () => this.toggleTheme());
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.classList.remove("active");
+        });
+
+        document.getElementById(tabName)?.classList.add("active");
+        document.querySelector(`[data-tab="${tabName}"]`)?.classList.add("active");
+
+        if (tabName === "insights") {
+            setTimeout(() => {
+                this.renderChart("insightChart", "insightAnalyticsPanel", "insightHealthInsights");
+            }, 150);
         }
     }
 
@@ -116,7 +171,9 @@ class ProgressPond {
     loadStorage() {
         try {
             const saved = localStorage.getItem(this.storageKey);
-            if (saved) Object.assign(this.data, JSON.parse(saved));
+            if (saved) {
+                Object.assign(this.data, JSON.parse(saved));
+            }
         } catch (error) {
             console.error("Storage load error:", error);
         }
@@ -131,11 +188,10 @@ class ProgressPond {
     }
 
     addLog(logArray, payload) {
-        if (!this.data[logArray]) this.data[logArray] = [];
 
         this.data[logArray].push({
             ...payload,
-            id: Date.now()
+            id: Date.now() + Math.floor(Math.random() * 1000)
         });
 
         this.saveStorage();
@@ -143,13 +199,13 @@ class ProgressPond {
     }
 
     addHop() {
-        const input = document.getElementById("dailyInput");
-        const priority = document.getElementById("priorityInput");
+        const input = document.getElementById("hopInput");
+        const priority = document.getElementById("hopPriority");
 
         if (!input || !input.value.trim()) return;
 
         this.data.daily.push({
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             text: input.value.trim(),
             priority: priority?.value || "Medium",
             completed: false,
@@ -158,18 +214,19 @@ class ProgressPond {
         });
 
         input.value = "";
+        priority.value = "Medium";
+
         this.saveStorage();
         this.renderAll();
     }
 
     toggleHop(id) {
         const hop = this.data.daily.find(h => h.id === id);
+        if (!hop) return;
 
-        if (hop) {
-            hop.completed = !hop.completed;
-            this.saveStorage();
-            this.renderAll();
-        }
+        hop.completed = !hop.completed;
+        this.saveStorage();
+        this.renderAll();
     }
 
     deleteHop(id) {
@@ -178,15 +235,23 @@ class ProgressPond {
         this.renderAll();
     }
 
+    deleteLog(logArray, id) {
+        if (!this.data[logArray]) return;
+
+        this.data[logArray] = this.data[logArray].filter(item => item.id !== id);
+        this.saveStorage();
+        this.renderAll();
+    }
+
     addSugar() {
         const input = document.getElementById("sugarInput");
         const val = parseFloat(input?.value);
 
-        if (isNaN(val)) return;
+        if (!val || isNaN(val)) return;
 
         this.addLog("sugarLog", {
             type: "sugar",
-            val: val,
+            val,
             icon: "🩸",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -194,15 +259,15 @@ class ProgressPond {
         input.value = "";
     }
 
-    addCarb() {
+    addCarbs() {
         const input = document.getElementById("carbInput");
         const val = parseFloat(input?.value);
 
-        if (isNaN(val)) return;
+        if (!val || isNaN(val)) return;
 
         this.addLog("carbLog", {
             type: "carbs",
-            val: val,
+            val,
             icon: "🥣",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -214,11 +279,11 @@ class ProgressPond {
         const input = document.getElementById("insulinInput");
         const val = parseFloat(input?.value);
 
-        if (isNaN(val)) return;
+        if (!val || isNaN(val)) return;
 
         this.addLog("insulinLog", {
             type: "insulin",
-            val: val,
+            val,
             icon: "💉",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
@@ -226,110 +291,125 @@ class ProgressPond {
         input.value = "";
     }
 
-    addSleepFromInput(quality) {
-        const input = document.getElementById("sleepHoursInput");
-        const hours = parseFloat(input?.value);
+    addSleep() {
+        const hoursInput = document.getElementById("sleepHoursInput");
+        const qualityInput = document.getElementById("sleepQualityInput");
+        const hours = parseFloat(hoursInput?.value);
+        const quality = qualityInput?.value;
 
-        if (isNaN(hours)) return;
+        if (!hours || isNaN(hours)) return;
 
         this.addLog("sleepLog", {
             type: "sleep",
-            hours: hours,
-            quality: quality,
+            hours,
+            quality,
             icon: "😴",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
 
+        hoursInput.value = "";
+        qualityInput.value = "Good";
+    }
+
+    addSymptom() {
+        const input = document.getElementById("symptomInput");
+        if (!input || !input.value.trim()) return;
+
+        const symptomText = input.value.trim();
+
+        const symptomMap = {
+            low: "🩺",
+            high: "🩺",
+            nausea: "🤢",
+            fatigue: "😴",
+            headache: "🤕",
+            dizziness: "😵",
+            sweating: "😓",
+            shaking: "🫨",
+            anxiety: "😰",
+            confusion: "😕",
+            blurry: "👁️",
+            tingling: "✋",
+            other: "🩺"
+        };
+
+        const icon = Object.entries(symptomMap).find(([key]) =>
+            symptomText.toLowerCase().includes(key)
+        )?.[1] || "🩺";
+
+        this.addLog("symptomLog", {
+            type: "symptom",
+            val: symptomText,
+            icon,
+            fullDate: this.currentFullDate(this.getSelectedTime())
+        });
+
         input.value = "";
     }
 
-    addStress(level) {
-        this.addLog("stressLog", {
-            type: "stress",
-            val: level,
-            score: this.stressScores[level] || 5,
-            icon: "😰",
-            fullDate: this.currentFullDate(this.getSelectedTime())
-        });
-    }
+    addExercise() {
+        const typeInput = document.getElementById("exerciseTypeInput");
+        const minutesInput = document.getElementById("exerciseMinutesInput");
+        const intensityInput = document.getElementById("exerciseIntensityInput");
 
-    addEnergy(level) {
-        this.addLog("energyLog", {
-            type: "energy",
-            val: level,
-            score: this.energyScores[level] || 5,
-            icon: "⚡",
-            fullDate: this.currentFullDate(this.getSelectedTime())
-        });
-    }
+        const type = typeInput?.value;
+        const minutes = parseFloat(minutesInput?.value);
+        const intensity = intensityInput?.value;
 
-    addSymptom(symptom) {
-        this.addLog("symptomLog", {
-            type: "symptom",
-            val: symptom,
-            icon: "🩺",
-            fullDate: this.currentFullDate(this.getSelectedTime())
-        });
-    }
-
-    addExerciseFromInput(type, intensity) {
-        const input = document.getElementById("exerciseMinutesInput");
-        const minutes = parseInt(input?.value, 10);
-
-        if (isNaN(minutes) || minutes < 1) return;
+        if (!type || !minutes || isNaN(minutes)) return;
 
         this.addLog("exerciseLog", {
             type: "exercise",
             exerciseType: type,
-            minutes: minutes,
+            minutes,
             duration: minutes,
-            intensity: intensity,
+            intensity,
             icon: "🏃",
             fullDate: this.currentFullDate(this.getSelectedTime())
         });
 
-        input.value = "";
+        typeInput.value = "";
+        minutesInput.value = "";
+        intensityInput.value = "Moderate";
     }
 
     toggleWater(btn, index) {
         if (btn.classList.contains("active")) {
-            btn.classList.remove("active");
-            this.data.waterCount = Math.max(0, this.data.waterCount - 1);
+            this.data.waterCount = index;
         } else {
-            btn.classList.add("active");
             this.data.waterCount = index + 1;
         }
 
-        this.addLog("waterLog", {
-            type: "water",
-            val: this.data.waterCount,
-            icon: "💧",
-            fullDate: this.currentFullDate(this.getSelectedTime())
-        });
+        this.saveStorage();
+        this.renderAll();
+    }
+
+    clearWater() {
+        if (!confirm("Clear water intake?")) return;
+
+        this.data.waterCount = 0;
+        document.querySelectorAll(".drop-btn").forEach(btn => btn.classList.remove("active"));
+
+        this.saveStorage();
+        this.renderAll();
     }
 
     renderAll() {
         this.renderBasicUI();
         this.renderTasks();
-        this.renderSummaryStats();
         this.renderHistory();
     }
 
     renderBasicUI() {
-        const dateEl = document.getElementById("currentDate");
-
-        if (dateEl) {
-            const today = new Date();
-
-            dateEl.textContent = today.toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "short",
-                day: "numeric"
-            });
+        const streakEl = document.getElementById("streakCount");
+        if (streakEl) {
+            streakEl.textContent = this.data.streak;
         }
 
         const waterCountEl = document.getElementById("waterCountText");
-        if (waterCountEl) waterCountEl.textContent = `${this.data.waterCount} / 8`;
+        if (waterCountEl) {
+            waterCountEl.textContent = `${this.data.waterCount} / 8`;
+        }
 
         document.querySelectorAll(".drop-btn").forEach((btn, index) => {
             if (index < this.data.waterCount) {
@@ -341,141 +421,181 @@ class ProgressPond {
     }
 
     renderTasks() {
-        const list = document.getElementById("dailyList");
+        const list = document.getElementById("todayTaskList");
+
         if (!list) return;
 
-        const todayDate = this.getTodayDate();
-        const todayTasks = this.data.daily.filter(t => t.date === todayDate);
-
-        if (todayTasks.length === 0) {
-            list.innerHTML = `
-                <li style="text-align:center;color:var(--txt);opacity:0.5;padding:20px;">
-                    No hops yet. Start hopping! 🐸
-                </li>
-            `;
-            this.updateProgress(0, 0);
-            return;
-        }
+        const today = this.getTodayDate();
+        const todayTasks = this.data.daily.filter(t => t.date === today);
 
         list.innerHTML = todayTasks.map(task => `
-            <li class="task-item ${task.completed ? 'completed' : ''}">
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
-                    onchange="pond.toggleHop(${task.id})">
+            <li class="task-item ${task.completed ? "completed" : ""}">
+                <input 
+                    type="checkbox" 
+                    class="task-checkbox" 
+                    ${task.completed ? "checked" : ""}
+                    onchange="pond.toggleHop(${task.id})"
+                >
                 <span class="task-text">${this.escapeHtml(task.text)}</span>
                 <span class="priority-badge priority-${task.priority.toLowerCase()}">${task.priority}</span>
                 <button class="btn-delete" onclick="pond.deleteHop(${task.id})">×</button>
             </li>
-        `).join("");
-
-        const completed = todayTasks.filter(t => t.completed).length;
-        this.updateProgress(completed, todayTasks.length);
-    }
-
-    updateProgress(completed, total) {
-        const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
-
-        const progressFill = document.getElementById("dailyProgress");
-        const progressText = document.getElementById("dailyProgressText");
-
-        if (progressFill) progressFill.style.width = percent + "%";
-        if (progressText) progressText.textContent = percent + "%";
-    }
-
-    renderSummaryStats() {
-        const todayDate = this.getTodayDate();
-
-        const todayMoods = this.data.moodLog.filter(m => m.fullDate?.includes(todayDate));
-        let moodAvg = "—";
-
-        if (todayMoods.length > 0) {
-            const moodSum = todayMoods.reduce((sum, m) => sum + (this.moodScores[m.val] || 5), 0);
-            moodAvg = (moodSum / todayMoods.length).toFixed(1);
-        }
-
-        const todayGlucose = this.data.sugarLog.filter(s => s.fullDate?.includes(todayDate));
-        let glucoseAvg = "—";
-
-        if (todayGlucose.length > 0) {
-            const glucoseSum = todayGlucose.reduce((sum, s) => sum + s.val, 0);
-            glucoseAvg = (glucoseSum / todayGlucose.length).toFixed(0) + " mg/dL";
-        }
-
-        const moodEl = document.getElementById("todayMoodAvg");
-        const glucoseEl = document.getElementById("todayGlucoseAvg");
-
-        if (moodEl) moodEl.textContent = moodAvg;
-        if (glucoseEl) glucoseEl.textContent = glucoseAvg;
+        `).join("") || "<li>No tasks for today. Add one to get started!</li>";
     }
 
     renderHistory() {
-        const dailyHistory = document.getElementById("achievementDailyHistoryList");
+        const dailyHistory = document.getElementById("dailyHistoryList");
+        const todayGlucose = this.data.sugarLog.filter(s =>
+            s.fullDate && s.fullDate.includes(this.getTodayDate())
+        );
+
+        let glucoseAvg = "—";
+
+        if (todayGlucose.length > 0) {
+            const glucoseSum = todayGlucose.reduce((sum, s) => sum + Number(s.val || 0), 0);
+            glucoseAvg = Math.round(glucoseSum / todayGlucose.length) + " mg/dL";
+        }
+
+        const moodEl = document.getElementById("todayMoodAvg");
+        if (moodEl) moodEl.textContent = glucoseAvg;
 
         if (dailyHistory) {
             const completed = this.data.daily.filter(t => t.completed);
 
-            dailyHistory.innerHTML = completed.slice(-10).map(t => `
+            dailyHistory.innerHTML = completed.slice(-20).reverse().map(t => `
                 <div class="history-item">
-                    <strong>${this.escapeHtml(t.text)}</strong>
-                    <small>${new Date(t.createdAt).toLocaleDateString()}</small>
+                    <span>
+                        <strong>${this.escapeHtml(t.text)}</strong>
+                        <small>${t.createdAt ? new Date(t.createdAt).toLocaleDateString() : ""}</small>
+                    </span>
+                    <button class="btn-delete" onclick="pond.deleteHop(${t.id})">×</button>
                 </div>
             `).join("") || "<div>No completed tasks yet</div>";
         }
 
-        const trackerHistory = document.getElementById("achievementTrackerHistoryList");
+        const trackerHistory = document.getElementById("trackerHistoryList");
 
         if (trackerHistory) {
             const allLogs = [
-                ...this.data.moodLog.map(m => `${m.icon} Mood: ${m.val} @ ${m.fullDate || 'N/A'}`),
-                ...this.data.sugarLog.map(s => `🩸 Glucose: ${s.val}mg/dL @ ${s.fullDate || 'N/A'}`),
-                ...this.data.sleepLog.map(s => `😴 Sleep: ${s.hours}h (${s.quality}) @ ${s.fullDate || 'N/A'}`),
-                ...this.data.exerciseLog.map(e => `🏃 Exercise: ${e.minutes}min ${e.exerciseType} @ ${e.fullDate || 'N/A'}`),
-                ...this.data.waterLog.map(w => `💧 Water: ${w.val}/8 @ ${w.fullDate || 'N/A'}`),
-                ...this.data.carbLog.map(c => `🥣 Carbs: ${c.val}g @ ${c.fullDate || 'N/A'}`),
-                ...this.data.insulinLog.map(i => `💉 Insulin: ${i.val}u @ ${i.fullDate || 'N/A'}`),
-                ...this.data.stressLog.map(s => `😰 Stress: ${s.val} @ ${s.fullDate || 'N/A'}`),
-                ...this.data.energyLog.map(e => `⚡ Energy: ${e.val} @ ${e.fullDate || 'N/A'}`)
-            ];
+                ...this.data.moodLog.map(m => ({
+                    text: `${m.icon || "😊"} Mood: ${m.val} @ ${m.fullDate || "N/A"}`,
+                    id: m.id,
+                    logArray: "moodLog",
+                    sort: this.dateTimeToNumber(m.fullDate)
+                })),
+                ...this.data.sugarLog.map(s => ({
+                    text: `🩸 Glucose: ${s.val}mg/dL @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "sugarLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.sleepLog.map(s => ({
+                    text: `😴 Sleep: ${s.hours}h (${s.quality}) @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "sleepLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.exerciseLog.map(e => ({
+                    text: `🏃 Exercise: ${e.minutes || e.duration || 0}min ${e.exerciseType || ""} @ ${e.fullDate || "N/A"}`,
+                    id: e.id,
+                    logArray: "exerciseLog",
+                    sort: this.dateTimeToNumber(e.fullDate)
+                })),
+                ...this.data.waterLog.map(w => ({
+                    text: `💧 Water: ${w.val}/8 @ ${w.fullDate || "N/A"}`,
+                    id: w.id,
+                    logArray: "waterLog",
+                    sort: this.dateTimeToNumber(w.fullDate)
+                })),
+                ...this.data.carbLog.map(c => ({
+                    text: `🥣 Carbs: ${c.val}g @ ${c.fullDate || "N/A"}`,
+                    id: c.id,
+                    logArray: "carbLog",
+                    sort: this.dateTimeToNumber(c.fullDate)
+                })),
+                ...this.data.insulinLog.map(i => ({
+                    text: `💉 Insulin: ${i.val}u @ ${i.fullDate || "N/A"}`,
+                    id: i.id,
+                    logArray: "insulinLog",
+                    sort: this.dateTimeToNumber(i.fullDate)
+                })),
+                ...this.data.stressLog.map(s => ({
+                    text: `😰 Stress: ${s.val} @ ${s.fullDate || "N/A"}`,
+                    id: s.id,
+                    logArray: "stressLog",
+                    sort: this.dateTimeToNumber(s.fullDate)
+                })),
+                ...this.data.energyLog.map(e => ({
+                    text: `⚡ Energy: ${e.val} @ ${e.fullDate || "N/A"}`,
+                    id: e.id,
+                    logArray: "energyLog",
+                    sort: this.dateTimeToNumber(e.fullDate)
+                }))
+            ].sort((a, b) => b.sort - a.sort);
 
-            trackerHistory.innerHTML = allLogs.slice(-15).map(log => `
-                <div class="history-item">${log}</div>
+            trackerHistory.innerHTML = allLogs.slice(0, 30).map(log => `
+                <div class="history-item">
+                    <span>${this.escapeHtml(log.text)}</span>
+                    <button class="btn-delete" onclick="pond.deleteLog('${log.logArray}', ${log.id})">×</button>
+                </div>
             `).join("") || "<div>No tracker logs yet</div>";
         }
 
         const symptomHistory = document.getElementById("achievementSymptomHistoryList");
 
         if (symptomHistory) {
-            symptomHistory.innerHTML = this.data.symptomLog.slice(-10).map(s => `
-                <div class="history-item">${s.icon} ${s.val} @ ${s.fullDate || 'N/A'}</div>
+            const symptoms = [...this.data.symptomLog].sort((a, b) => {
+                return this.dateTimeToNumber(b.fullDate) - this.dateTimeToNumber(a.fullDate);
+            });
+
+            symptomHistory.innerHTML = symptoms.slice(0, 20).map(s => `
+                <div class="history-item">
+                    <span>${s.icon || "🩺"} ${this.escapeHtml(s.val)} @ ${s.fullDate || "N/A"}</span>
+                    <button class="btn-delete" onclick="pond.deleteLog('symptomLog', ${s.id})">×</button>
+                </div>
             `).join("") || "<div>No symptoms logged</div>";
         }
     }
 
-    renderChart(canvasId = 'insightChart', panelId = 'insightAnalyticsPanel', insightId = 'insightHealthInsights') {
+    renderChart(canvasId = "insightChart", panelId = "insightAnalyticsPanel", insightId = "insightHealthInsights") {
         const canvas = document.getElementById(canvasId);
         if (!canvas || typeof Chart === "undefined") return;
 
         const ctx = canvas.getContext("2d");
 
-        const sortedSugar = this.sortByLoggedTime(this.data.sugarLog);
-        const sortedMood = this.sortByLoggedTime(this.data.moodLog);
-        const sortedCarbs = this.sortByLoggedTime(this.data.carbLog);
-        const sortedWater = this.sortByLoggedTime(this.data.waterLog);
-        const sortedInsulin = this.sortByLoggedTime(this.data.insulinLog);
-        const sortedSleep = this.sortByLoggedTime(this.data.sleepLog);
-        const sortedStress = this.sortByLoggedTime(this.data.stressLog);
-        const sortedEnergy = this.sortByLoggedTime(this.data.energyLog);
-        const sortedExercise = this.sortByLoggedTime(this.data.exerciseLog);
+        const sortByLoggedTime = (logs = []) => {
+            return logs.sort((a, b) => {
+                return this.dateTimeToNumber(b.fullDate) - this.dateTimeToNumber(a.fullDate);
+            });
+        };
 
-        const allEntries = []
-            .concat(sortedSugar, sortedMood, sortedCarbs, sortedWater, sortedInsulin)
-            .concat(sortedSleep, sortedStress, sortedEnergy, sortedExercise)
-            .sort((a, b) => this.dateTimeToNumber(a.fullDate) - this.dateTimeToNumber(b.fullDate));
+        const sortedSugar = sortByLoggedTime(this.data.sugarLog);
+        const sortedMood = sortByLoggedTime(this.data.moodLog);
+        const sortedCarbs = sortByLoggedTime(this.data.carbLog);
+        const sortedWater = sortByLoggedTime(this.data.waterLog);
+        const sortedInsulin = sortByLoggedTime(this.data.insulinLog);
+        const sortedSleep = sortByLoggedTime(this.data.sleepLog);
+        const sortedStress = sortByLoggedTime(this.data.stressLog);
+        const sortedEnergy = sortByLoggedTime(this.data.energyLog);
+        const sortedExercise = sortByLoggedTime(this.data.exerciseLog);
+
+        const allEntries = [
+            ...sortedSugar,
+            ...sortedMood,
+            ...sortedCarbs,
+            ...sortedWater,
+            ...sortedInsulin,
+            ...sortedSleep,
+            ...sortedStress,
+            ...sortedEnergy,
+            ...sortedExercise
+        ];
 
         const labels = [];
 
         allEntries.forEach(entry => {
-            const t = this.getTime(entry.fullDate);
-            if (t && !labels.includes(t)) labels.push(t);
+            const label = this.getChartLabel(entry.fullDate);
+            if (label && !labels.includes(label)) labels.push(label);
         });
 
         const datasets = [];
@@ -483,11 +603,15 @@ class ProgressPond {
         if (sortedSugar.length > 0) {
             datasets.push({
                 label: "Glucose",
-                data: sortedSugar.map(s => ({ x: this.getTime(s.fullDate), y: s.val })),
+                data: sortedSugar.map(s => ({
+                    x: this.getChartLabel(s.fullDate),
+                    y: Number(s.val)
+                })),
                 borderColor: "#ef4444",
                 backgroundColor: "#ef4444",
                 tension: 0.3,
-                yAxisID: "y"
+                fill: false,
+                pointRadius: 3
             });
         }
 
@@ -495,75 +619,84 @@ class ProgressPond {
             datasets.push({
                 label: "Mood",
                 data: sortedMood.map(m => ({
-                    x: this.getTime(m.fullDate),
+                    x: this.getChartLabel(m.fullDate),
                     y: this.moodScores[m.val] || 5
                 })),
                 borderColor: "#f59e0b",
                 backgroundColor: "#f59e0b",
-                tension: 0.3,
-                yAxisID: "yMood"
+                pointRadius: 3,
+                showLine: false
             });
         }
 
         if (sortedCarbs.length > 0) {
             datasets.push({
                 label: "Carbs",
-                data: sortedCarbs.map(c => ({ x: this.getTime(c.fullDate), y: c.val })),
+                data: sortedCarbs.map(c => ({
+                    x: this.getChartLabel(c.fullDate),
+                    y: Number(c.val)
+                })),
                 backgroundColor: "#10b981",
                 pointStyle: "rect",
                 showLine: false,
-                pointRadius: 8,
-                yAxisID: "y"
+                pointRadius: 4
             });
         }
 
         if (sortedWater.length > 0) {
             datasets.push({
                 label: "Water",
-                data: sortedWater.map(w => ({ x: this.getTime(w.fullDate), y: w.val })),
+                data: sortedWater.map(w => ({
+                    x: this.getChartLabel(w.fullDate),
+                    y: Number(w.val)
+                })),
                 backgroundColor: "#00d4ff",
                 pointStyle: "triangle",
                 showLine: false,
-                pointRadius: 8,
-                yAxisID: "yMood"
+                pointRadius: 5
             });
         }
 
         if (sortedInsulin.length > 0) {
             datasets.push({
                 label: "Insulin",
-                data: sortedInsulin.map(i => ({ x: this.getTime(i.fullDate), y: i.val })),
+                data: sortedInsulin.map(i => ({
+                    x: this.getChartLabel(i.fullDate),
+                    y: Number(i.val)
+                })),
                 backgroundColor: "#8b5cf6",
                 pointStyle: "star",
                 showLine: false,
-                pointRadius: 10,
-                yAxisID: "yMood"
+                pointRadius: 6
             });
         }
 
         if (sortedSleep.length > 0) {
             datasets.push({
                 label: "Sleep Hours",
-                data: sortedSleep.map(sl => ({ x: this.getTime(sl.fullDate), y: sl.hours })),
+                data: sortedSleep.map(sl => ({
+                    x: this.getChartLabel(sl.fullDate),
+                    y: Number(sl.hours)
+                })),
                 borderColor: "#6366f1",
                 backgroundColor: "#6366f1",
                 tension: 0.3,
-                pointRadius: 7,
-                yAxisID: "ySleep"
+                fill: false,
+                pointRadius: 3
             });
+        }
 
+        if (sortedSleep.length > 0) {
             datasets.push({
                 label: "Sleep Quality",
                 data: sortedSleep.map(sl => ({
-                    x: this.getTime(sl.fullDate),
+                    x: this.getChartLabel(sl.fullDate),
                     y: this.sleepQualityScores[sl.quality] || 5
                 })),
                 borderColor: "#a855f7",
                 backgroundColor: "#a855f7",
-                tension: 0.3,
-                pointStyle: "rectRounded",
-                pointRadius: 7,
-                yAxisID: "yMood"
+                pointRadius: 3,
+                showLine: false
             });
         }
 
@@ -571,13 +704,13 @@ class ProgressPond {
             datasets.push({
                 label: "Stress",
                 data: sortedStress.map(s => ({
-                    x: this.getTime(s.fullDate),
+                    x: this.getChartLabel(s.fullDate),
                     y: this.stressScores[s.val] || s.score || 5
                 })),
                 borderColor: "#ff00aa",
                 backgroundColor: "#ff00aa",
-                tension: 0.3,
-                yAxisID: "yMood"
+                pointRadius: 3,
+                showLine: false
             });
         }
 
@@ -585,13 +718,13 @@ class ProgressPond {
             datasets.push({
                 label: "Energy",
                 data: sortedEnergy.map(e => ({
-                    x: this.getTime(e.fullDate),
+                    x: this.getChartLabel(e.fullDate),
                     y: this.energyScores[e.val] || e.score || 5
                 })),
                 borderColor: "#00aa77",
                 backgroundColor: "#00aa77",
-                tension: 0.3,
-                yAxisID: "yMood"
+                pointRadius: 3,
+                showLine: false
             });
         }
 
@@ -599,35 +732,36 @@ class ProgressPond {
             datasets.push({
                 label: "Exercise Minutes",
                 data: sortedExercise.map(ex => ({
-                    x: this.getTime(ex.fullDate),
-                    y: ex.minutes || ex.duration || 0
+                    x: this.getChartLabel(ex.fullDate),
+                    y: Number(ex.minutes || ex.duration || 0)
                 })),
                 borderColor: "#3b82f6",
                 backgroundColor: "#3b82f6",
                 tension: 0.3,
-                pointRadius: 7,
-                yAxisID: "yExercise"
+                fill: false,
+                pointRadius: 3
             });
         }
 
-        if (this.insightChart) this.insightChart.destroy();
+        if (this.insightChart) {
+            this.insightChart.destroy();
+        }
 
         this.insightChart = new Chart(ctx, {
             type: "line",
             data: {
-                datasets: datasets
+                labels,
+                datasets
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: "nearest",
-                    intersect: false
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: "#5d4a4a" } }
                 },
                 scales: {
                     x: {
                         type: "category",
-                        labels: labels,
                         ticks: {
                             color: "#5d4a4a",
                             maxRotation: 45,
@@ -635,116 +769,80 @@ class ProgressPond {
                         }
                     },
                     y: {
-                        position: "left",
-                        min: 0,
-                        max: 350,
-                        title: {
-                            display: true,
-                            text: "Glucose / Carbs"
-                        },
-                        ticks: {
-                            color: "#5d4a4a"
-                        }
-                    },
-                    yMood: {
-                        position: "right",
-                        min: 1,
-                        max: 10,
-                        title: {
-                            display: true,
-                            text: "Mood / Stress / Energy / Water / Insulin"
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        ticks: {
-                            color: "#5d4a4a"
-                        }
-                    },
-                    ySleep: {
-                        position: "right",
-                        min: 0,
-                        max: 16,
-                        title: {
-                            display: true,
-                            text: "Sleep Hours"
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        ticks: {
-                            color: "#5d4a4a"
-                        }
-                    },
-                    yExercise: {
-                        position: "right",
-                        min: 0,
-                        max: 120,
-                        title: {
-                            display: true,
-                            text: "Exercise Minutes"
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        ticks: {
-                            color: "#5d4a4a"
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            boxWidth: 10,
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    tooltip: {
-                        enabled: true
+                        beginAtZero: true,
+                        ticks: { color: "#5d4a4a" }
                     }
                 }
             }
         });
 
-        const insightPanel = document.getElementById(panelId);
-
-        if (insightPanel) {
-            insightPanel.innerHTML = `
-                <div>📊 Entries graphed: ${allEntries.length}</div>
-                <div>🩸 Glucose logs: ${sortedSugar.length}</div>
-                <div>😊 Mood logs: ${sortedMood.length}</div>
-                <div>⚡ Energy logs: ${sortedEnergy.length}</div>
-            `;
-        }
-
         const insightBox = document.getElementById(insightId);
 
         if (insightBox) {
-            if (allEntries.length === 0) {
-                insightBox.innerHTML = `
-                    <h3>🌸 Gentle Pattern Insights</h3>
-                    <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
-                `;
-            } else {
-                insightBox.innerHTML = `
-                    <h3>🌸 Gentle Pattern Insights</h3>
-                    <ul>
-                        <li>Your chart is now using individual health tracker entries instead of a 7-day trend average.</li>
-                        <li>Entries are plotted by the time you logged them, so past-time entries should appear in the right order.</li>
-                        <li>Glucose and carbs use the left axis; mood, stress, energy, water, insulin, sleep, and exercise use their own scaled axes.</li>
-                    </ul>
-                `;
-            }
+            insightBox.innerHTML = this.buildInsights(allEntries);
         }
     }
 
+    buildInsights(allEntries) {
+        if (!allEntries.length) {
+            return `
+                <h3>🌸 Gentle Pattern Insights</h3>
+                <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
+            `;
+        }
+
+        const insights = [];
+
+        if (this.data.sugarLog.length > 0) {
+            const glucoseVals = this.data.sugarLog.map(s => Number(s.val)).filter(n => !isNaN(n));
+            const avgGlucose = glucoseVals.reduce((a, b) => a + b, 0) / glucoseVals.length;
+
+            insights.push(`Your average logged glucose is about ${Math.round(avgGlucose)} mg/dL.`);
+        }
+
+        if (this.data.moodLog.length > 0) {
+            const moodVals = this.data.moodLog.map(m => this.moodScores[m.val] || 5);
+            const avgMood = moodVals.reduce((a, b) => a + b, 0) / moodVals.length;
+
+            insights.push(`Your average logged mood score is ${avgMood.toFixed(1)} out of 10.`);
+        }
+
+        if (this.data.sleepLog.length > 0) {
+            const totalSleep = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+            const avgSleep = totalSleep / this.data.sleepLog.length;
+
+            insights.push(`Your average logged sleep is ${avgSleep.toFixed(1)} hours.`);
+        }
+
+        if (this.data.exerciseLog.length > 0) {
+            const totalExercise = this.data.exerciseLog.reduce((sum, e) => {
+                return sum + Number(e.minutes || e.duration || 0);
+            }, 0);
+
+            insights.push(`You have logged ${totalExercise} total exercise minutes.`);
+        }
+
+        insights.push("Your chart is using individual health tracker entries, not a 7-day trend average.");
+
+        return `
+            <h3>🌸 Gentle Pattern Insights</h3>
+            <ul>${insights.map(i => `<li>${this.escapeHtml(i)}</li>`).join("")}</ul>
+        `;
+    }
+
     sortByLoggedTime(logs = []) {
-        return [...logs].sort((a, b) => {
-            return this.dateTimeToNumber(a.fullDate) - this.dateTimeToNumber(b.fullDate);
+        return logs.sort((a, b) => {
+            return this.dateTimeToNumber(b.fullDate) - this.dateTimeToNumber(a.fullDate);
         });
+    }
+
+    getChartLabel(fullDate) {
+        const date = this.getDateOnly(fullDate);
+        const time = this.getTime(fullDate);
+
+        if (!date && !time) return "";
+
+        return `${date} ${time}`.trim();
     }
 
     getTime(fullDate) {
@@ -754,7 +852,7 @@ class ProgressPond {
             return fullDate.split(" @ ")[1];
         }
 
-        return fullDate;
+        return "";
     }
 
     getDateOnly(fullDate) {
@@ -764,68 +862,53 @@ class ProgressPond {
             return fullDate.split(" @ ")[0];
         }
 
-        return this.getTodayDate();
-    }
-
-    timeToMinutes(fullDate) {
-        const time = this.getTime(fullDate);
-        if (!time) return 0;
-
-        const parts = time.split(":");
-        const hours = parseInt(parts[0], 10) || 0;
-        const minutes = parseInt(parts[1], 10) || 0;
-
-        return hours * 60 + minutes;
+        return fullDate;
     }
 
     dateTimeToNumber(fullDate) {
-        const datePart = this.getDateOnly(fullDate);
-        const timeMinutes = this.timeToMinutes(fullDate);
+        if (!fullDate) return 0;
 
-        const parsedDate = new Date(datePart);
-        const dateValue = isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+        const date = this.getDateOnly(fullDate);
+        const time = this.getTime(fullDate);
 
-        return dateValue + timeMinutes * 60000;
+        const dateNum = new Date(date).getTime();
+        if (!dateNum) return 0;
+
+        if (!time) return dateNum;
+
+        const [hours, minutes] = time.split(":").map(Number);
+        return dateNum + (hours * 60 + minutes) * 60000;
     }
 
     getSelectedTime() {
-        return document.getElementById("manualTimeInput")?.value || null;
+        const timePicker = document.getElementById("timePicker");
+        return timePicker?.value || this.getDefaultTime();
+    }
+
+    getDefaultTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+
+        return `${hours}:${minutes}`;
     }
 
     resetTimePicker() {
-        const timeInput = document.getElementById("manualTimeInput");
-        if (!timeInput) return;
-
-        const now = new Date();
-        timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const timePicker = document.getElementById("timePicker");
+        if (timePicker) {
+            timePicker.value = this.getDefaultTime();
+        }
     }
 
-    currentFullDate(manualTime) {
-        const now = new Date();
+    currentFullDate(time = "") {
+        const date = this.getTodayDate();
+        const t = time || this.getDefaultTime();
 
-        const timeStr = manualTime || now.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
-
-        return `${now.toLocaleDateString()} @ ${timeStr}`;
+        return `${date} @ ${t}`;
     }
 
     getTodayDate() {
         return new Date().toLocaleDateString();
-    }
-
-    getLast7Days() {
-        const days = [];
-
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            days.push(date.toLocaleDateString());
-        }
-
-        return days;
     }
 
     checkDailyReset() {
@@ -834,335 +917,284 @@ class ProgressPond {
 
         if (lastDate !== today) {
             this.data.daily = this.data.daily.filter(t => t.date === today);
-            localStorage.setItem("lastPondDate", today);
-        }
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    clearWater() {
-        if (confirm("Clear water intake?")) {
             this.data.waterCount = 0;
-            document.querySelectorAll(".drop-btn").forEach(btn => btn.classList.remove("active"));
+            localStorage.setItem("lastPondDate", today);
             this.saveStorage();
-            this.renderBasicUI();
-            this.renderHistory();
         }
     }
 
     clearDayKeepGoals() {
-        if (confirm("Clear today's health logs? (Keeps tasks)")) {
-            const today = this.getTodayDate();
+        if (!confirm("Clear today's health logs? This keeps tasks.")) return;
 
-            this.data.moodLog = this.data.moodLog.filter(m => !m.fullDate?.includes(today));
-            this.data.sugarLog = this.data.sugarLog.filter(s => !s.fullDate?.includes(today));
-            this.data.carbLog = this.data.carbLog.filter(c => !c.fullDate?.includes(today));
-            this.data.waterLog = this.data.waterLog.filter(w => !w.fullDate?.includes(today));
-            this.data.insulinLog = this.data.insulinLog.filter(i => !i.fullDate?.includes(today));
-            this.data.sleepLog = this.data.sleepLog.filter(s => !s.fullDate?.includes(today));
-            this.data.stressLog = this.data.stressLog.filter(s => !s.fullDate?.includes(today));
-            this.data.energyLog = this.data.energyLog.filter(e => !e.fullDate?.includes(today));
-            this.data.symptomLog = this.data.symptomLog.filter(s => !s.fullDate?.includes(today));
-            this.data.exerciseLog = this.data.exerciseLog.filter(e => !e.fullDate?.includes(today));
+        const today = this.getTodayDate();
 
-            this.data.waterCount = 0;
+        const logArrays = [
+            "moodLog",
+            "sugarLog",
+            "carbLog",
+            "waterLog",
+            "insulinLog",
+            "sleepLog",
+            "stressLog",
+            "energyLog",
+            "symptomLog",
+            "exerciseLog"
+        ];
 
-            this.saveStorage();
-            this.renderAll();
+        logArrays.forEach(logArray => {
+            this.data[logArray] = this.data[logArray].filter(item => {
+                return !item.fullDate?.includes(today);
+            });
+        });
+
+        this.data.waterCount = 0;
+
+        this.saveStorage();
+        this.renderAll();
+
+        if (this.insightChart) {
+            this.renderChart("insightChart", "insightAnalyticsPanel", "insightHealthInsights");
         }
     }
 
     resetDayEverything() {
-        if (confirm("⚠️ Reset EVERYTHING? This cannot be undone!")) {
-            if (confirm("Are you ABSOLUTELY sure?")) {
-                this.data = {
-                    daily: [],
-                    history: [],
-                    moodLog: [],
-                    sugarLog: [],
-                    carbLog: [],
-                    waterLog: [],
-                    insulinLog: [],
-                    sleepLog: [],
-                    stressLog: [],
-                    energyLog: [],
-                    symptomLog: [],
-                    exerciseLog: [],
-                    analytics: [],
-                    waterCount: 0,
-                    streak: 0,
-                    lastStreakDate: null,
-                    theme: 'light'
-                };
+        if (!confirm("⚠️ Reset EVERYTHING? This cannot be undone!")) return;
+        if (!confirm("Are you ABSOLUTELY sure?")) return;
 
-                this.saveStorage();
-                this.renderAll();
+        this.data = {
+            daily: [],
+            history: [],
+            moodLog: [],
+            sugarLog: [],
+            carbLog: [],
+            waterLog: [],
+            insulinLog: [],
+            sleepLog: [],
+            stressLog: [],
+            energyLog: [],
+            symptomLog: [],
+            exerciseLog: [],
+            analytics: [],
+            waterCount: 0,
+            streak: 0,
+            lastStreakDate: null,
+            theme: "light"
+        };
 
-                if (this.insightChart) {
-                    this.insightChart.destroy();
-                    this.insightChart = null;
-                }
-            }
+        this.saveStorage();
+        this.renderAll();
+
+        if (this.insightChart) {
+            this.insightChart.destroy();
+            this.insightChart = null;
         }
     }
 
     async exportToExcelWithChart() {
+        const btn = document.getElementById("tabExportExcelBtn");
+
         try {
-            // First render the chart to ensure it's up to date
-            this.renderChart('insightChart', 'insightAnalyticsPanel', 'insightHealthInsights');
-            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!window.ExcelJS) {
+                alert("❌ ExcelJS did not load. Check your CDN links in the HTML.");
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "Exporting...";
+            }
 
             const workbook = new ExcelJS.Workbook();
+            workbook.creator = "Progress Pond";
+            workbook.created = new Date();
+
             const summarySheet = workbook.addWorksheet("Summary");
-            summarySheet.pageSetup.paperSize = ExcelJS.PageSize.A4;
-            summarySheet.pageSetup.orientation = 'landscape';
-
-            let currentRow = 1;
-
-            // ===== CHART AT TOP =====
-            const chartCanvas = document.getElementById("insightChart");
-            if (chartCanvas && chartCanvas.parentElement.offsetHeight > 0) {
-                try {
-                    const chartImage = await html2canvas(chartCanvas, {
-                        allowTaint: true,
-                        useCORS: true,
-                        scale: 2
-                    });
-
-                    const chartImageData = chartImage.toDataURL('image/png');
-                    const imageId = workbook.addImage({
-                        base64: chartImageData,
-                        extension: 'png'
-                    });
-
-                    summarySheet.addImage(imageId, `A${currentRow}:H20`);
-                    currentRow = 22;
-                } catch (e) {
-                    console.log("Chart export skipped:", e);
-                    currentRow = 2;
-                }
-            } else {
-                currentRow = 2;
-            }
-
-            // Add spacing
-            summarySheet.addRow([]);
-            currentRow++;
-
-            // ===== GOALS AND SYMPTOMS SIDE BY SIDE =====
-            const completedGoals = this.data.daily.filter(t => t.completed);
-            const symptoms = this.data.symptomLog;
-
-            // Headers
-            summarySheet.addRow(["Completed Goals 🌿", "", "", "", "Symptoms 🩺"]);
-            const headerRow = summarySheet.getRow(currentRow);
-            headerRow.getCell(1).font = { bold: true, size: 12 };
-            headerRow.getCell(5).font = { bold: true, size: 12 };
-            currentRow++;
-
-            // Get max length
-            const maxLength = Math.max(
-                completedGoals.length > 0 ? completedGoals.length : 1,
-                symptoms.length > 0 ? symptoms.length : 1
-            );
-
-            // Add goals and symptoms in parallel columns
-            for (let i = 0; i < maxLength; i++) {
-                let goalText = "";
-                let goalPriority = "";
-                let symptomText = "";
-                let symptomTime = "";
-
-                if (i < completedGoals.length) {
-                    goalText = completedGoals[i].text;
-                    goalPriority = completedGoals[i].priority;
-                } else if (i === 0 && completedGoals.length === 0) {
-                    goalText = "No completed goals";
-                }
-
-                if (i < symptoms.length) {
-                    symptomText = symptoms[i].val;
-                    symptomTime = symptoms[i].fullDate || "";
-                }
-
-                summarySheet.addRow([goalText, goalPriority, "", "", symptomText, symptomTime]);
-                currentRow++;
-            }
-
-            // Add spacing
-            summarySheet.addRow([]);
-            currentRow++;
-
-            // ===== SLEEP & EXERCISE =====
-            summarySheet.addRow(["Sleep & Exercise 😴🏃"]);
-            summarySheet.getCell(currentRow, 1).font = { bold: true, size: 12 };
-            currentRow++;
-
-            const sleepSum = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
-            const exerciseSum = this.data.exerciseLog.reduce((sum, e) => sum + Number(e.minutes || 0), 0);
-
-            // Sleep details
-            if (this.data.sleepLog.length > 0) {
-                summarySheet.addRow(["Total Sleep Hours", sleepSum.toFixed(2)]);
-                currentRow++;
-
-                summarySheet.addRow(["Sleep Log Details"]);
-                summarySheet.getCell(currentRow, 1).font = { bold: true };
-                currentRow++;
-
-                this.data.sleepLog.forEach(sleep => {
-                    summarySheet.addRow([
-                        `${sleep.hours}h (${sleep.quality})`,
-                        sleep.fullDate || ""
-                    ]);
-                    currentRow++;
-                });
-            } else {
-                summarySheet.addRow(["Total Sleep Hours", "0"]);
-                currentRow++;
-                summarySheet.addRow(["No sleep logged"]);
-                currentRow++;
-            }
-
-            summarySheet.addRow([]);
-            currentRow++;
-
-            // Exercise details
-            if (this.data.exerciseLog.length > 0) {
-                summarySheet.addRow(["Total Exercise Minutes", exerciseSum]);
-                currentRow++;
-
-                summarySheet.addRow(["Exercise Log Details"]);
-                summarySheet.getCell(currentRow, 1).font = { bold: true };
-                currentRow++;
-
-                this.data.exerciseLog.forEach(exercise => {
-                    summarySheet.addRow([
-                        `${exercise.exerciseType} (${exercise.intensity})`,
-                        `${exercise.minutes} min`,
-                        exercise.fullDate || ""
-                    ]);
-                    currentRow++;
-                });
-            } else {
-                summarySheet.addRow(["Total Exercise Minutes", "0"]);
-                currentRow++;
-                summarySheet.addRow(["No exercise logged"]);
-                currentRow++;
-            }
-
-            // ===== DETAILED DATA SHEET =====
             const dataSheet = workbook.addWorksheet("Detailed Data");
 
-            dataSheet.columns = [
-                { header: "Date", key: "date", width: 15 },
-                { header: "Time", key: "time", width: 10 },
-                { header: "Type", key: "type", width: 12 },
-                { header: "Value", key: "value", width: 15 },
-                { header: "Details", key: "details", width: 25 }
+            summarySheet.columns = [
+                { width: 28 },
+                { width: 22 },
+                { width: 22 },
+                { width: 22 }
             ];
+
+            summarySheet.addRow(["🐸 Progress Pond Export"]);
+            summarySheet.getCell("A1").font = { bold: true, size: 18 };
+
+            summarySheet.addRow(["Exported", new Date().toLocaleString()]);
+            summarySheet.addRow([]);
+
+            const completedGoals = this.data.daily.filter(t => t.completed);
+
+            const avg = arr => {
+                const clean = arr.map(Number).filter(n => !isNaN(n));
+                if (!clean.length) return null;
+                return clean.reduce((a, b) => a + b, 0) / clean.length;
+            };
+
+            const glucoseAvg = avg(this.data.sugarLog.map(s => s.val));
+            const moodAvg = avg(this.data.moodLog.map(m => this.moodScores[m.val] || 5));
+            const sleepTotal = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+            const exerciseTotal = this.data.exerciseLog.reduce((sum, e) => {
+                return sum + Number(e.minutes || e.duration || 0);
+            }, 0);
+
+            summarySheet.addRow(["Completed Goals", completedGoals.length]);
+            summarySheet.addRow(["Mood Logs", this.data.moodLog.length]);
+            summarySheet.addRow(["Average Mood", moodAvg ? moodAvg.toFixed(1) : "—"]);
+            summarySheet.addRow(["Glucose Logs", this.data.sugarLog.length]);
+            summarySheet.addRow(["Average Glucose", glucoseAvg ? `${Math.round(glucoseAvg)} mg/dL` : "—"]);
+            summarySheet.addRow(["Total Sleep", `${sleepTotal.toFixed(2)} hours`]);
+            summarySheet.addRow(["Total Exercise", `${exerciseTotal} minutes`]);
+            summarySheet.addRow(["Symptoms Logged", this.data.symptomLog.length]);
+            summarySheet.addRow([]);
+
+            summarySheet.addRow(["Completed Goals 🌿"]);
+            summarySheet.lastRow.font = { bold: true };
+
+            if (completedGoals.length) {
+                completedGoals.forEach(goal => {
+                    summarySheet.addRow([
+                        goal.text,
+                        goal.priority,
+                        goal.createdAt ? new Date(goal.createdAt).toLocaleString() : ""
+                    ]);
+                });
+            } else {
+                summarySheet.addRow(["No completed goals"]);
+            }
+
+            summarySheet.addRow([]);
+            summarySheet.addRow(["Symptoms 🩺"]);
+            summarySheet.lastRow.font = { bold: true };
+
+            if (this.data.symptomLog.length) {
+                this.data.symptomLog.forEach(symptom => {
+                    summarySheet.addRow([symptom.val, symptom.fullDate || ""]);
+                });
+            } else {
+                summarySheet.addRow(["No symptoms logged"]);
+            }
+
+            dataSheet.columns = [
+                { header: "Date", key: "date", width: 16 },
+                { header: "Time", key: "time", width: 12 },
+                { header: "Type", key: "type", width: 18 },
+                { header: "Value", key: "value", width: 18 },
+                { header: "Details", key: "details", width: 28 }
+            ];
+
+            const splitDateTime = fullDate => {
+                const parts = String(fullDate || "").split(" @ ");
+                return {
+                    date: parts[0] || "",
+                    time: parts[1] || ""
+                };
+            };
 
             const rows = [];
 
-            this.data.moodLog.forEach(m => {
-                const [date, time] = (m.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Mood", value: m.val, details: m.icon });
-            });
+            const pushRow = (fullDate, type, value, details = "") => {
+                const dt = splitDateTime(fullDate);
 
-            this.data.sugarLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Glucose", value: s.val + "mg/dL", details: "" });
-            });
+                rows.push({
+                    date: dt.date,
+                    time: dt.time,
+                    type,
+                    value,
+                    details
+                });
+            };
 
-            this.data.carbLog.forEach(c => {
-                const [date, time] = (c.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Carbs", value: c.val + "g", details: "" });
-            });
-
-            this.data.insulinLog.forEach(i => {
-                const [date, time] = (i.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Insulin", value: i.val + "u", details: "" });
-            });
-
-            this.data.waterLog.forEach(w => {
-                const [date, time] = (w.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Water", value: w.val + "/8", details: "" });
-            });
-
-            this.data.sleepLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Sleep", value: s.hours + "h", details: s.quality });
-            });
-
-            this.data.stressLog.forEach(s => {
-                const [date, time] = (s.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Stress", value: s.val, details: s.score || "" });
-            });
-
-            this.data.energyLog.forEach(e => {
-                const [date, time] = (e.fullDate || "").split(" @ ");
-                rows.push({ date, time, type: "Energy", value: e.val, details: e.score || "" });
-            });
+            this.data.moodLog.forEach(m => pushRow(m.fullDate, "Mood", m.val, m.icon || ""));
+            this.data.sugarLog.forEach(s => pushRow(s.fullDate, "Glucose", s.val, "mg/dL"));
+            this.data.carbLog.forEach(c => pushRow(c.fullDate, "Carbs", c.val, "grams"));
+            this.data.insulinLog.forEach(i => pushRow(i.fullDate, "Insulin", i.val, "units"));
+            this.data.waterLog.forEach(w => pushRow(w.fullDate, "Water", w.val, "out of 8"));
+            this.data.sleepLog.forEach(s => pushRow(s.fullDate, "Sleep", s.hours, s.quality || ""));
+            this.data.stressLog.forEach(s => pushRow(s.fullDate, "Stress", s.val, s.score || ""));
+            this.data.energyLog.forEach(e => pushRow(e.fullDate, "Energy", e.val, e.score || ""));
+            this.data.symptomLog.forEach(s => pushRow(s.fullDate, "Symptom", s.val, s.icon || ""));
 
             this.data.exerciseLog.forEach(e => {
-                const [date, time] = (e.fullDate || "").split(" @ ");
-                rows.push({
-                    date,
-                    time,
-                    type: "Exercise",
-                    value: e.minutes + "m",
-                    details: e.exerciseType + " (" + e.intensity + ")"
-                });
+                pushRow(
+                    e.fullDate,
+                    "Exercise",
+                    e.minutes || e.duration || "",
+                    `${e.exerciseType || ""} ${e.intensity ? `(${e.intensity})` : ""}`.trim()
+                );
             });
 
             rows
-                .sort((a, b) => {
-                    const aFull = `${a.date || this.getTodayDate()} @ ${a.time || "00:00"}`;
-                    const bFull = `${b.date || this.getTodayDate()} @ ${b.time || "00:00"}`;
-                    return this.dateTimeToNumber(aFull) - this.dateTimeToNumber(bFull);
-                })
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .forEach(row => dataSheet.addRow(row));
 
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            dataSheet.getRow(1).font = { bold: true };
+
+            [summarySheet, dataSheet].forEach(sheet => {
+                sheet.eachRow(row => {
+                    row.eachCell(cell => {
+                        cell.alignment = {
+                            vertical: "middle",
+                            wrapText: true
+                        };
+                    });
+                });
             });
 
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Progress-Pond-${this.getTodayDate()}.xlsx`;
-            link.click();
+            const buffer = await workbook.xlsx.writeBuffer();
 
-            window.URL.revokeObjectURL(url);
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+
+            const safeDate = new Date().toISOString().slice(0, 10);
+
+            if (window.saveAs) {
+                saveAs(blob, `Progress-Pond-${safeDate}.xlsx`);
+            } else {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+
+                link.href = url;
+                link.download = `Progress-Pond-${safeDate}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+            }
+
             alert("✅ Export successful!");
         } catch (error) {
             console.error("Export error:", error);
-            alert("❌ Export failed. Please try again.");
+            alert("❌ Export failed. Check the console for details.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "📊 Export to Excel";
+            }
         }
     }
 
-    setMotivation() {
-        const motivationText = document.getElementById("motivationText");
-
-        if (motivationText) {
-            motivationText.textContent = this.frogQuotes[Math.floor(Math.random() * this.frogQuotes.length)];
-        }
+    setInterval(callback, timeout) {
+        return window.setInterval(callback, timeout);
     }
 
-    closeBanner() {
-        const bar = document.getElementById("motivationBar");
-        if (bar) bar.style.display = "none";
+    setTimeout(callback, timeout) {
+        return window.setTimeout(callback, timeout);
     }
 
     toggleTheme() {
-        this.data.theme = this.data.theme === 'light' ? 'dark' : 'light';
-        document.body.classList.toggle('dark-mode');
+        this.data.theme = this.data.theme === "light" ? "dark" : "light";
+        document.body.classList.toggle("dark-mode");
         this.saveStorage();
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = String(text ?? "");
+        return div.innerHTML;
     }
 }
 
@@ -1170,4 +1202,10 @@ let pond;
 
 document.addEventListener("DOMContentLoaded", () => {
     pond = new ProgressPond();
+
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js").catch(error => {
+            console.warn("Service worker not registered:", error);
+        });
+    }
 });
