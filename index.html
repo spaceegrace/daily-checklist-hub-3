@@ -314,7 +314,7 @@ function switchTab(tabName) {
     // Trigger chart redraw if it's the insights tab
     if (tabName === 'insights' && pond) {
         setTimeout(() => {
-            pond.renderChart('insightChart', 'insightAnalyticsPanel', 'insightHealthInsights');
+            pond.renderChart('insightChart', 'insightAnalyticsPanel');
         }, 100);
     }
 }
