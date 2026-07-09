@@ -893,42 +893,98 @@ class ProgressPond {
         if (!allEntries.length) {
             return `
                 <h3>🌸 Gentle Pattern Insights</h3>
-                <ul><li>Log health data to begin seeing supportive patterns.</li></ul>
+                <ul><li>Log health data to begin seeing supportive patterns! 💚</li></ul>
             `;
         }
 
         const insights = [];
 
+        // Glucose data insights
         if (this.data.sugarLog.length > 0) {
             const glucoseVals = this.data.sugarLog.map(s => Number(s.val)).filter(n => !isNaN(n));
-            const avgGlucose = glucoseVals.reduce((a, b) => a + b, 0) / glucoseVals.length;
-
-            insights.push(`Your average logged glucose is about ${Math.round(avgGlucose)} mg/dL.`);
+            const minGlucose = Math.min(...glucoseVals);
+            const maxGlucose = Math.max(...glucoseVals);
+            const rangeGlucose = maxGlucose - minGlucose;
+            
+            insights.push(`📊 Your glucose data spans from ${minGlucose} to ${maxGlucose} mg/dL — that's a ${rangeGlucose} point spread!`);
         }
 
+        // Mood data insights
         if (this.data.moodLog.length > 0) {
             const moodVals = this.data.moodLog.map(m => this.moodScores[m.val] || 5);
-            const avgMood = moodVals.reduce((a, b) => a + b, 0) / moodVals.length;
-
-            insights.push(`Your average logged mood score is ${avgMood.toFixed(1)} out of 10.`);
+            const maxMood = Math.max(...moodVals);
+            const happyCount = this.data.moodLog.filter(m => this.moodScores[m.val] >= 8).length;
+            
+            insights.push(`😊 You logged ${this.data.moodLog.length} mood entries, with ${happyCount} happy/focused moments!`);
         }
 
+        // Sleep data insights
         if (this.data.sleepLog.length > 0) {
             const totalSleep = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
-            const avgSleep = totalSleep / this.data.sleepLog.length;
-
-            insights.push(`Your average logged sleep is ${avgSleep.toFixed(1)} hours.`);
+            const greatSleep = this.data.sleepLog.filter(s => s.quality === "Great").length;
+            
+            insights.push(`😴 You've logged ${this.data.sleepLog.length} sleep sessions (${totalSleep.toFixed(1)} total hours), including ${greatSleep} great nights! ✨`);
         }
 
+        // Exercise data insights
         if (this.data.exerciseLog.length > 0) {
             const totalExercise = this.data.exerciseLog.reduce((sum, e) => {
                 return sum + Number(e.minutes || e.duration || 0);
             }, 0);
-
-            insights.push(`You have logged ${totalExercise} total exercise minutes.`);
+            
+            insights.push(`🏃 Amazing! You logged ${this.data.exerciseLog.length} activities for a total of ${totalExercise} minutes of movement!`);
         }
 
-        insights.push("Your chart is using individual health tracker entries, not a 7-day trend average.");
+        // Water data insights
+        if (this.data.waterLog.length > 0) {
+            const avgWater = this.data.waterLog.reduce((sum, w) => sum + Number(w.val || 0), 0) / this.data.waterLog.length;
+            
+            insights.push(`💧 You averaged ${avgWater.toFixed(1)} cups of water per log — stay hydrated, little frog! 🐸`);
+        }
+
+        // Stress data insights
+        if (this.data.stressLog.length > 0) {
+            const calmCount = this.data.stressLog.filter(s => s.val === "Calm" || s.val === "Mild").length;
+            
+            insights.push(`🧘 Out of ${this.data.stressLog.length} stress entries, ${calmCount} were peaceful moments. Nice balance! 🌿`);
+        }
+
+        // Carb data insights
+        if (this.data.carbLog.length > 0) {
+            const totalCarbs = this.data.carbLog.reduce((sum, c) => sum + Number(c.val || 0), 0);
+            const avgCarbs = totalCarbs / this.data.carbLog.length;
+            
+            insights.push(`🥣 You tracked ${this.data.carbLog.length} carb entries — averaging ${avgCarbs.toFixed(1)}g per entry.`);
+        }
+
+        // Insulin data insights
+        if (this.data.insulinLog.length > 0) {
+            const totalInsulin = this.data.insulinLog.reduce((sum, i) => sum + Number(i.val || 0), 0);
+            
+            insights.push(`💉 You've logged ${this.data.insulinLog.length} insulin doses totaling ${totalInsulin.toFixed(1)} units.`);
+        }
+
+        // Symptom data insights
+        if (this.data.symptomLog.length > 0) {
+            const symptomTypes = new Set(this.data.symptomLog.map(s => s.val)).size;
+            
+            insights.push(`🩺 You've tracked ${this.data.symptomLog.length} symptom entries (${symptomTypes} different types). Data helps you recognize patterns! 💪`);
+        }
+
+        // Energy data insights
+        if (this.data.energyLog.length > 0) {
+            const energyVals = this.data.energyLog.map(e => this.energyScores[e.val] || 5);
+            const goodEnergyDays = this.data.energyLog.filter(e => this.energyScores[e.val] >= 7).length;
+            
+            insights.push(`⚡ You're tracking your energy levels! ${goodEnergyDays} out of ${this.data.energyLog.length} entries were high-energy. Keep it going! 🚀`);
+        }
+
+        const totalEntries = this.data.moodLog.length + this.data.sugarLog.length + this.data.carbLog.length + 
+                            this.data.waterLog.length + this.data.insulinLog.length + this.data.sleepLog.length + 
+                            this.data.stressLog.length + this.data.energyLog.length + this.data.exerciseLog.length + 
+                            this.data.symptomLog.length;
+
+        insights.push(`🐸 You've logged ${totalEntries} total entries! Your dedication to tracking is amazing! 💖`);
 
         return `
             <h3>🌸 Gentle Pattern Insights</h3>
@@ -1117,9 +1173,97 @@ class ProgressPond {
             workbook.creator = "Progress Pond";
             workbook.created = new Date();
 
+            // Create sheets
+            const graphSheet = workbook.addWorksheet("📊 Graph Summary");
             const summarySheet = workbook.addWorksheet("Summary");
             const dataSheet = workbook.addWorksheet("Detailed Data");
 
+            // ========== GRAPH SUMMARY SHEET ==========
+            graphSheet.columns = [
+                { width: 35 },
+                { width: 20 }
+            ];
+
+            graphSheet.addRow(["🐸 Your Pond Summary 🐸"]);
+            graphSheet.getCell("A1").font = { bold: true, size: 16 };
+
+            graphSheet.addRow(["Exported", new Date().toLocaleString()]);
+            graphSheet.addRow([]);
+
+            // Quick stats for graph sheet
+            const moodLogCount = this.data.moodLog.length;
+            const glucoseLogCount = this.data.sugarLog.length;
+            const sleepLogCount = this.data.sleepLog.length;
+            const exerciseLogCount = this.data.exerciseLog.length;
+            const waterLogCount = this.data.waterLog.length;
+            const carbLogCount = this.data.carbLog.length;
+            const insulinLogCount = this.data.insulinLog.length;
+            const stressLogCount = this.data.stressLog.length;
+            const energyLogCount = this.data.energyLog.length;
+            const symptomLogCount = this.data.symptomLog.length;
+
+            graphSheet.addRow(["📊 ENTRY COUNTS 📊"]);
+            graphSheet.lastRow.font = { bold: true, size: 12 };
+
+            graphSheet.addRow(["😊 Mood Entries", moodLogCount]);
+            graphSheet.addRow(["🩸 Glucose Entries", glucoseLogCount]);
+            graphSheet.addRow(["😴 Sleep Sessions", sleepLogCount]);
+            graphSheet.addRow(["🏃 Exercise Sessions", exerciseLogCount]);
+            graphSheet.addRow(["💧 Water Logs", waterLogCount]);
+            graphSheet.addRow(["🥣 Carb Entries", carbLogCount]);
+            graphSheet.addRow(["💉 Insulin Entries", insulinLogCount]);
+            graphSheet.addRow(["😰 Stress Entries", stressLogCount]);
+            graphSheet.addRow(["⚡ Energy Entries", energyLogCount]);
+            graphSheet.addRow(["🩺 Symptom Entries", symptomLogCount]);
+
+            graphSheet.addRow([]);
+            graphSheet.addRow(["🎯 KEY INSIGHTS 🎯"]);
+            graphSheet.lastRow.font = { bold: true, size: 12 };
+
+            // Data-focused insights for export
+            if (glucoseLogCount > 0) {
+                const glucoseVals = this.data.sugarLog.map(s => Number(s.val)).filter(n => !isNaN(n));
+                const minGlucose = Math.min(...glucoseVals);
+                const maxGlucose = Math.max(...glucoseVals);
+                graphSheet.addRow([`Glucose Range: ${minGlucose} - ${maxGlucose} mg/dL`]);
+            }
+
+            if (moodLogCount > 0) {
+                const happyCount = this.data.moodLog.filter(m => this.moodScores[m.val] >= 8).length;
+                graphSheet.addRow([`Happy/Focused Moments: ${happyCount}/${moodLogCount}`]);
+            }
+
+            if (sleepLogCount > 0) {
+                const totalSleep = this.data.sleepLog.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+                graphSheet.addRow([`Total Sleep Hours: ${totalSleep.toFixed(1)}`]);
+            }
+
+            if (exerciseLogCount > 0) {
+                const totalExercise = this.data.exerciseLog.reduce((sum, e) => {
+                    return sum + Number(e.minutes || e.duration || 0);
+                }, 0);
+                graphSheet.addRow([`Total Exercise Minutes: ${totalExercise}`]);
+            }
+
+            if (waterLogCount > 0) {
+                const avgWater = this.data.waterLog.reduce((sum, w) => sum + Number(w.val || 0), 0) / waterLogCount;
+                graphSheet.addRow([`Average Water Cups: ${avgWater.toFixed(1)}/8`]);
+            }
+
+            if (stressLogCount > 0) {
+                const calmCount = this.data.stressLog.filter(s => s.val === "Calm" || s.val === "Mild").length;
+                graphSheet.addRow([`Calm/Mild Stress: ${calmCount}/${stressLogCount}`]);
+            }
+
+            const totalEntries = moodLogCount + glucoseLogCount + sleepLogCount + exerciseLogCount + 
+                                waterLogCount + carbLogCount + insulinLogCount + stressLogCount + 
+                                energyLogCount + symptomLogCount;
+
+            graphSheet.addRow([]);
+            graphSheet.addRow([`✨ Total Entries: ${totalEntries} ✨`]);
+            graphSheet.lastRow.font = { bold: true, size: 12 };
+
+            // ========== ORIGINAL SUMMARY SHEET ==========
             summarySheet.columns = [
                 { width: 28 },
                 { width: 22 },
@@ -1185,6 +1329,7 @@ class ProgressPond {
                 summarySheet.addRow(["No symptoms logged"]);
             }
 
+            // ========== DETAILED DATA SHEET ==========
             dataSheet.columns = [
                 { header: "Date", key: "date", width: 16 },
                 { header: "Time", key: "time", width: 12 },
@@ -1244,7 +1389,7 @@ class ProgressPond {
 
             dataSheet.getRow(1).font = { bold: true };
 
-            [summarySheet, dataSheet].forEach(sheet => {
+            [graphSheet, summarySheet, dataSheet].forEach(sheet => {
                 sheet.eachRow(row => {
                     row.eachCell(cell => {
                         cell.alignment = {
@@ -1278,7 +1423,7 @@ class ProgressPond {
                 window.URL.revokeObjectURL(url);
             }
 
-            alert("✅ Export successful!");
+            alert("✅ Export successful! 🎉");
         } catch (error) {
             console.error("Export error:", error);
             alert("❌ Export failed. Check the console for details.");
