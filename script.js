@@ -1155,6 +1155,32 @@ class ProgressPond {
         }
     }
 
+    captureChartImage() {
+        return new Promise((resolve) => {
+            const canvas = document.getElementById("insightChart");
+            if (!canvas) {
+                resolve(null);
+                return;
+            }
+
+            // Create a temporary canvas at high resolution for better quality
+            const tempCanvas = document.createElement("canvas");
+            const tempCtx = tempCanvas.getContext("2d");
+
+            // Set high DPI for better export quality
+            const scale = 2;
+            tempCanvas.width = canvas.width * scale;
+            tempCanvas.height = canvas.height * scale;
+            tempCtx.scale(scale, scale);
+
+            // Draw the current chart onto the temp canvas
+            tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+            // Convert to image data
+            resolve(tempCanvas.toDataURL("image/png"));
+        });
+    }
+
     async exportToExcelWithChart() {
         const btn = document.getElementById("tabExportExcelBtn");
 
@@ -1174,9 +1200,55 @@ class ProgressPond {
             workbook.created = new Date();
 
             // Create sheets
+            const chartImageSheet = workbook.addWorksheet("📈 Chart Image");
             const graphSheet = workbook.addWorksheet("📊 Graph Summary");
             const summarySheet = workbook.addWorksheet("Summary");
             const dataSheet = workbook.addWorksheet("Detailed Data");
+
+            // ========== CHART IMAGE SHEET ==========
+            chartImageSheet.pageSetup = {
+                paperSize: ExcelJS.Workbook.PAPERSIZE.A4,
+                orientation: "landscape"
+            };
+
+            chartImageSheet.addRow(["📈 Your Health Insights Chart 📈"]);
+            chartImageSheet.getCell("A1").font = { bold: true, size: 16 };
+
+            chartImageSheet.addRow(["Exported", new Date().toLocaleString()]);
+            chartImageSheet.addRow([]);
+
+            // Capture and insert chart image
+            const chartImageData = await this.captureChartImage();
+            if (chartImageData) {
+                try {
+                    const imageId = workbook.addImage({
+                        base64: chartImageData,
+                        extension: "png"
+                    });
+
+                    // Insert image at A5, spanning multiple columns/rows
+                    chartImageSheet.addImage(imageId, {
+                        tl: { col: 0, row: 4 },
+                        ext: { width: 800, height: 400 }
+                    });
+
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                    chartImageSheet.addRow([]);
+                } catch (imgError) {
+                    chartImageSheet.addRow(["⚠️ Chart image could not be captured"]);
+                    console.warn("Image capture warning:", imgError);
+                }
+            }
 
             // ========== GRAPH SUMMARY SHEET ==========
             graphSheet.columns = [
@@ -1389,7 +1461,7 @@ class ProgressPond {
 
             dataSheet.getRow(1).font = { bold: true };
 
-            [graphSheet, summarySheet, dataSheet].forEach(sheet => {
+            [chartImageSheet, graphSheet, summarySheet, dataSheet].forEach(sheet => {
                 sheet.eachRow(row => {
                     row.eachCell(cell => {
                         cell.alignment = {
@@ -1423,7 +1495,7 @@ class ProgressPond {
                 window.URL.revokeObjectURL(url);
             }
 
-            alert("✅ Export successful! 🎉");
+            alert("✅ Export successful! Your chart is in the '📈 Chart Image' tab! 🎉");
         } catch (error) {
             console.error("Export error:", error);
             alert("❌ Export failed. Check the console for details.");
